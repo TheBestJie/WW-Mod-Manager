@@ -79,8 +79,15 @@ class HomeScreen(Screen):
         self.app.push_screen(SettingsScreen())
 
     def action_search(self) -> None:
-        # Implemented by the global search task.
-        pass
+        from wwmm.models import CharacterEntry
+        from wwmm.screens.mods import ModsScreen
+        from wwmm.screens.search import SearchScreen
+
+        def open_entry(entry: CharacterEntry | None) -> None:
+            if entry is not None:
+                self.app.push_screen(ModsScreen(entry.character.slug))
+
+        self.app.push_screen(SearchScreen(), callback=open_entry)
 
     def action_update(self) -> None:
         # Implemented by the in-TUI roster update task.
