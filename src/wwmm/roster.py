@@ -5,11 +5,11 @@ from __future__ import annotations
 import json
 import logging
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from wwmm.constants import ELEMENTS, GROUP_ORDER, ROSTER_SCHEMA_VERSION
-from wwmm.errors import RosterError
+from wwmm.errors import LayoutError, RosterError
 from wwmm.models import Character
 
 log = logging.getLogger(__name__)
@@ -189,3 +189,60 @@ def load_effective_roster(data_dir: Path) -> Roster:
         except RosterError as exc:
             log.warning("本地角色表损坏，回退到内置角色表：%s", exc)
     return load_bundled_roster()
+
+
+@dataclass
+class DirEnsureResult:
+    created: list[Path] = field(default_factory=list)
+    skipped: list[Path] = field(default_factory=list)
+    errors: list[tuple[Path, str]] = field(default_factory=list)
+
+
+def _find_character_root(mods_root: Path) -> Path | None:
+    for entry in mods_root.iterdir():
+        if entry.is_dir() and not entry.is_symlink() and entry.name.casefold() == "character":
+            return entry
+    return None
+
+
+def ensure_character_dirs(roster: Roster, mods_root: Path) -> DirEnsureResult:
+    """Create any missing `character/<folder>` directories.
+
+    Never deletes or overwrites anything. Missing Mods root is an error.
+    """
+    mods_root = Path(mods_root)
+    if not mods_root.is_dir():
+        raise LayoutError(f"Mods 目录不存在或不是目录：{mods_root}")
+
+    character_root = _find_character_root(mods_root)
+    if character_root is None:
+        character_root = mods_root / "character"
+        try:
+            character_root.mkdir()
+        except OSError as exc:
+            raise LayoutError(f"无法创建 character 目录：{exc}") from exc
+
+    result = DirEnsureResult()
+    existing = {entry.name.casefold(): entry for entry in character_root.iterdir()}
+
+    for character in roster.characters:
+        key = character.folder.casefold()
+        target = character_root / character.folder
+        if key in existing:
+            found = existing[key]
+            if found.is_symlink() or not found.is_dir():
+                result.errors.append((found, "同名路径已存在且不是目录，未覆盖"))
+            else:
+                result.skipped.append(found)
+            continue
+        try:
+            target.mkdir()
+        except OSError as exc:
+            result.errors.append((target, str(exc)))
+            log.warning("创建角色目录失败 %s：%s", target, exc)
+            continue
+        result.created.append(target)
+
+    log.info("角色目录补全：创建 %d，跳过 %d，错误 %d",
+             len(result.created), len(result.skipped), len(result.errors))
+    return result
