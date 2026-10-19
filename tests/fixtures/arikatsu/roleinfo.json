@@ -1,0 +1,9 @@
+[
+  {"Id": 1211, "Name": "RoleInfo_1211_Name", "RoleType": 1, "QualityId": 5, "ElementId": 2},
+  {"Id": 1210, "Name": "RoleInfo_1210_Name", "RoleType": 1, "QualityId": 5, "ElementId": 2},
+  {"Id": 1311, "Name": "RoleInfo_1311_Name", "RoleType": 1, "QualityId": 5, "ElementId": 3},
+  {"Id": 1509, "Name": "RoleInfo_1509_Name", "RoleType": 1, "QualityId": 5, "ElementId": 5},
+  {"Id": 1501, "Name": "RoleInfo_1501_Name", "RoleType": 1, "QualityId": 5, "ElementId": 5},
+  {"Id": 1604, "Name": "RoleInfo_1604_Name", "RoleType": 1, "QualityId": 5, "ElementId": 6},
+  {"Id": 9999, "Name": "RoleInfo_9999_Name", "RoleType": 2, "QualityId": 5, "ElementId": 2}
+]
