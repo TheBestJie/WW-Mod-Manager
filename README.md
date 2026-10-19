@@ -28,11 +28,40 @@ mod。不需要在 Wine 下安装任何 Windows 管理器。
 
 ## 安装
 
+### 一键安装（推荐）
+
+```bash
+git clone git@github.com:TheBestJie/WW-Mod-Manager.git
+cd WW-Mod-Manager
+./install.sh
+```
+
+脚本会：
+
+- 用 `uv tool install --editable` 把 `wwmm` 安装到 `~/.local/bin`；
+- 自动为 **bash、zsh、fish** 写入带标记的 PATH 配置块（可重复运行，不会重复添加）；
+- 验证 `wwmm --version`。
+
+重新打开终端后直接输入 `wwmm` 即可。如果当前终端还没生效，按脚本提示
+`source` 对应 shell 的配置文件。只想安装、不想改 shell 配置时用：
+
+```bash
+./install.sh --no-path
+```
+
+卸载：
+
+```bash
+uv tool uninstall ww-mod-manager
+```
+
+### 手动安装（开发）
+
 ```bash
 git clone git@github.com:TheBestJie/WW-Mod-Manager.git
 cd WW-Mod-Manager
 uv venv .venv
-source .venv/bin/activate
+source .venv/bin/activate        # fish: source .venv/bin/activate.fish
 uv pip install -e ".[dev]"
 wwmm
 ```
