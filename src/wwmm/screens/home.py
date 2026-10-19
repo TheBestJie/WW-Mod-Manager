@@ -90,8 +90,9 @@ class HomeScreen(Screen):
         self.app.push_screen(SearchScreen(), callback=open_entry)
 
     def action_update(self) -> None:
-        # Implemented by the in-TUI roster update task.
-        pass
+        from wwmm.screens.update import UpdateScreen
+
+        self.app.push_screen(UpdateScreen())
 
     def action_quit(self) -> None:
         self.app.exit()
