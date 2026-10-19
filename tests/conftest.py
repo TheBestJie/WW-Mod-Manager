@@ -3,6 +3,8 @@ from pathlib import Path
 
 import pytest
 
+from wwmm.app import WWMMApp
+from wwmm.config import Config, ConfigStore
 from wwmm.roster import parse_roster
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -52,3 +54,48 @@ def tmp_mods_root(tmp_path):
     root = tmp_path / "Mods"
     (root / "character").mkdir(parents=True)
     return root
+
+
+@pytest.fixture
+def app(tmp_path, roster, mods_tree):
+    config_store = ConfigStore(tmp_path / "config")
+    config = Config(mods_dir=mods_tree, auto_create_folders=True)
+    config_store.save(config)
+    return WWMMApp(
+        config_store=config_store,
+        config=config,
+        roster=roster,
+        data_dir=tmp_path / "data",
+        state_dir=tmp_path / "state",
+        home_dir=tmp_path / "home",
+    )
+
+
+@pytest.fixture
+def app_without_mods(tmp_path, roster):
+    config_store = ConfigStore(tmp_path / "config")
+    return WWMMApp(
+        config_store=config_store,
+        config=Config(),
+        roster=roster,
+        data_dir=tmp_path / "data",
+        state_dir=tmp_path / "state",
+        home_dir=tmp_path / "home",
+    )
+
+
+@pytest.fixture
+def sparse_app(tmp_path, roster):
+    mods = tmp_path / "Mods"
+    (mods / "character" / "denia").mkdir(parents=True)
+    config_store = ConfigStore(tmp_path / "config")
+    config = Config(mods_dir=mods, auto_create_folders=True)
+    config_store.save(config)
+    return WWMMApp(
+        config_store=config_store,
+        config=config,
+        roster=roster,
+        data_dir=tmp_path / "data",
+        state_dir=tmp_path / "state",
+        home_dir=tmp_path / "home",
+    )
