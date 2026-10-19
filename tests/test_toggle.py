@@ -72,4 +72,9 @@ def test_double_prefix_strips_only_one_level(tmp_path):
     enabled = toggle_mod(mod, enable=True)
     assert enabled.folder_name == "DISABLED_Foo"
     assert enabled.base_name == "Foo"
+    assert enabled.enabled is False
     assert not (tmp_path / "Foo").exists()
+
+    enabled_again = toggle_mod(enabled)
+    assert enabled_again.folder_name == "Foo"
+    assert enabled_again.enabled is True

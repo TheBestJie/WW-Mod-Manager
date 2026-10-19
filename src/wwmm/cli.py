@@ -11,7 +11,13 @@ from wwmm import __version__
 from wwmm.config import ConfigStore
 from wwmm.errors import LayoutError, RosterError, RosterUpdateError
 from wwmm.logging_setup import setup_logging
-from wwmm.paths import config_dir, data_dir, detect_mods_dirs, state_dir
+from wwmm.paths import (
+    config_dir,
+    data_dir,
+    detect_mods_dirs,
+    looks_like_mods_dir,
+    state_dir,
+)
 from wwmm.roster import ensure_character_dirs, load_effective_roster
 from wwmm.roster_update import update_roster
 
@@ -54,6 +60,12 @@ def _run_update(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 2
+    if not looks_like_mods_dir(Path(config.mods_dir)):
+        print(
+            f"错误：不是有效的 WWMI Mods 目录：{config.mods_dir}",
+            file=sys.stderr,
+        )
+        return 2
 
     try:
         result = update_roster(
@@ -91,7 +103,14 @@ def _run_tui(args: argparse.Namespace) -> int:
     store = ConfigStore(config_dir())
     config = store.load()
     if args.mods_dir is not None:
-        config.mods_dir = Path(args.mods_dir)
+        mods_dir = Path(args.mods_dir)
+        if not looks_like_mods_dir(mods_dir):
+            print(
+                f"错误：不是有效的 WWMI Mods 目录：{mods_dir}",
+                file=sys.stderr,
+            )
+            return 2
+        config.mods_dir = mods_dir
         store.save(config)
 
     from wwmm.app import WWMMApp

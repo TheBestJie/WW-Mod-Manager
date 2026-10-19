@@ -29,7 +29,7 @@ jobs:
       - name: Generate roster
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python scripts/build_roster.py --out data/roster.json
+        run: python scripts/build_roster.py --out data/roster.json --bundled-out src/wwmm/data/roster.json
 
       - name: Commit if changed
         run: |
@@ -40,6 +40,6 @@ jobs:
           VERSION=$(python -c 'import json; print(json.load(open("data/roster.json"))["game_version"])')
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/roster.json
+          git add data/roster.json src/wwmm/data/roster.json
           git commit -m "chore(roster): sync ${VERSION}"
           git push

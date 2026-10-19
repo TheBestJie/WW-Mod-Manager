@@ -13,4 +13,6 @@ def test_workflow_contract():
     assert wf["permissions"]["contents"] == "write"
     runs = " ".join(step.get("run", "") for step in wf["jobs"]["update"]["steps"])
     assert "scripts/build_roster.py" in runs
+    assert "--bundled-out" in runs
+    assert "src/wwmm/data/roster.json" in runs
     assert "git push" in runs

@@ -59,6 +59,71 @@ def test_build_fixture_matches_expected():
     assert built["characters"] == expected["characters"]
 
 
+def _valid_built():
+    data = _build()
+    data["characters"].insert(
+        0,
+        {
+            "slug": "sanhua",
+            "name_zh": "散华",
+            "name_en": "Sanhua",
+            "elements": ["冷凝"],
+            "pinyin": "sanhua",
+            "initials": "sh",
+            "aliases": ["散华", "sanhua"],
+            "folder": "sanhua",
+            "special": False,
+        },
+    )
+    data["characters"].insert(
+        1,
+        {
+            "slug": "yangyang",
+            "name_zh": "秧秧",
+            "name_en": "Yangyang",
+            "elements": ["气动"],
+            "pinyin": "yangyang",
+            "initials": "yy",
+            "aliases": ["秧秧", "yangyang"],
+            "folder": "yangyang",
+            "special": False,
+        },
+    )
+    return data
+
+
+def test_validation_accepts_complete_roster():
+    validate_roster_dict(_valid_built(), min_characters=1)
+
+
+def test_validation_rejects_missing_element():
+    data = _valid_built()
+    data["characters"] = [c for c in data["characters"] if "冷凝" not in c["elements"]]
+    with pytest.raises(RosterBuildError):
+        validate_roster_dict(data, min_characters=1)
+
+
+def test_validation_rejects_missing_rover():
+    data = _valid_built()
+    data["characters"] = [c for c in data["characters"] if c["slug"] != "rover"]
+    with pytest.raises(RosterBuildError):
+        validate_roster_dict(data, min_characters=1)
+
+
+def test_validation_rejects_missing_others():
+    data = _valid_built()
+    data["characters"] = [c for c in data["characters"] if c["slug"] != "others"]
+    with pytest.raises(RosterBuildError):
+        validate_roster_dict(data, min_characters=1)
+
+
+def test_validation_rejects_duplicate_slug():
+    data = _valid_built()
+    data["characters"].append({**data["characters"][0], "folder": "copy"})
+    with pytest.raises(RosterBuildError):
+        validate_roster_dict(data, min_characters=1)
+
+
 def test_validation_rejects_empty_roster():
     with pytest.raises(RosterBuildError):
         validate_roster_dict({"schema_version": 1, "characters": []})

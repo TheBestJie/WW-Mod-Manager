@@ -17,6 +17,18 @@ log = logging.getLogger(__name__)
 SLUG_RE = re.compile(r"^[a-z0-9]+$")
 
 
+def _is_safe_folder(folder: str) -> bool:
+    """A character folder must be exactly one path component."""
+    return (
+        bool(folder)
+        and folder not in (".", "..")
+        and "/" not in folder
+        and "\\" not in folder
+        and not Path(folder).is_absolute()
+        and Path(folder).name == folder
+    )
+
+
 @dataclass(frozen=True)
 class RosterSource:
     repo: str
@@ -90,6 +102,9 @@ def _parse_character(raw: object) -> Character:
     folder = raw.get("folder") or slug
     if not isinstance(folder, str) or not folder.strip():
         raise RosterError(f"{slug}.folder 不能为空")
+    folder = folder.strip()
+    if not _is_safe_folder(folder):
+        raise RosterError(f"{slug}.folder 必须是单一目录名：{folder!r}")
 
     raw_aliases = raw.get("aliases", [])
     if not isinstance(raw_aliases, list) or not all(isinstance(a, str) for a in raw_aliases):
@@ -168,7 +183,7 @@ def parse_roster(data: dict) -> Roster:
 def load_roster_file(path: Path) -> Roster:
     try:
         text = Path(path).read_text(encoding="utf-8")
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         raise RosterError(f"无法读取角色表 {path}：{exc}") from exc
     try:
         data = json.loads(text)
@@ -213,6 +228,9 @@ def ensure_character_dirs(roster: Roster, mods_root: Path) -> DirEnsureResult:
     mods_root = Path(mods_root)
     if not mods_root.is_dir():
         raise LayoutError(f"Mods 目录不存在或不是目录：{mods_root}")
+    for character in roster.characters:
+        if not _is_safe_folder(character.folder):
+            raise LayoutError(f"非法角色目录名：{character.folder!r}")
 
     character_root = _find_character_root(mods_root)
     if character_root is None:

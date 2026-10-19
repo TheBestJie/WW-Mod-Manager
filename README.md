@@ -88,7 +88,7 @@ wwmm update --force             # 允许远程版本比本地旧时覆盖
 wwmm update --no-create         # 只更新角色表，不补角色目录
 ```
 
-更新流程：拉取 → 校验 schema/角色数量/slug/属性/`rover`/`others` → 备份旧文件为
+更新流程：拉取 → 校验 schema/slug/属性/`rover`/`others`（拒绝空表）→ 备份旧文件为
 `roster.json.bak` → 原子写入 → 补全缺失角色目录。校验或下载失败时保留旧角色表。
 
 ## 数据与日志路径

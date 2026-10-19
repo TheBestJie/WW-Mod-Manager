@@ -23,6 +23,18 @@ def state_dir() -> Path:
     return Path(user_state_dir(APP_NAME, appauthor=False))
 
 
+def looks_like_mods_dir(path: Path) -> bool:
+    """Return True when *path* is safe to treat as a WWMI Mods directory."""
+    path = Path(path).expanduser()
+    if not path.is_dir():
+        return False
+    return (
+        (path / "character").exists()
+        or path.name.casefold() == "mods"
+        or (path.parent / "d3dx.ini").exists()
+    )
+
+
 def detect_mods_dirs(home: Path) -> list[Path]:
     """Return existing WWMI Mods directories in Wine/Proton prefixes."""
     home = Path(home)

@@ -10,7 +10,7 @@ from textual.app import App
 from wwmm.config import Config, ConfigStore
 from wwmm.errors import LayoutError
 from wwmm.models import Mod, Snapshot
-from wwmm.paths import detect_mods_dirs
+from wwmm.paths import detect_mods_dirs, looks_like_mods_dir
 from wwmm.roster import Roster, ensure_character_dirs
 from wwmm.roster_update import UpdateResult, update_roster
 from wwmm.scanner import scan
@@ -59,9 +59,14 @@ class WWMMApp(App):
         if self.config.mods_dir is None:
             self.push_screen(SettingsScreen(first_run=True))
             return
+        mods_dir = Path(self.config.mods_dir)
+        if not looks_like_mods_dir(mods_dir):
+            self.last_error = f"不是有效的 WWMI Mods 目录：{mods_dir}"
+            self.push_screen(SettingsScreen(first_run=True, error=self.last_error))
+            return
         try:
             self._ensure_character_dirs()
-            self.snapshot = scan(Path(self.config.mods_dir), self.roster)
+            self.snapshot = scan(mods_dir, self.roster)
         except LayoutError as exc:
             self.last_error = str(exc)
             self.push_screen(SettingsScreen(first_run=True, error=str(exc)))
@@ -87,7 +92,10 @@ class WWMMApp(App):
 
     def set_mods_dir(self, path: Path) -> Snapshot:
         """Persist a new Mods directory, create missing folders and re-scan."""
-        self.config.mods_dir = Path(path)
+        path = Path(path)
+        if not looks_like_mods_dir(path):
+            raise LayoutError(f"不是有效的 WWMI Mods 目录：{path}")
+        self.config.mods_dir = path
         self.config_store.save(self.config)
         self.created_dirs = []
         self._ensure_character_dirs()

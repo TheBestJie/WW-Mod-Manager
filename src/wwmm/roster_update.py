@@ -10,8 +10,14 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from wwmm.errors import RosterDowngradeError, RosterError, RosterUpdateError
+from wwmm.errors import (
+    RosterBuildError,
+    RosterDowngradeError,
+    RosterError,
+    RosterUpdateError,
+)
 from wwmm.roster import Roster, load_roster_file, parse_roster
+from wwmm.roster_build import validate_roster_dict
 
 log = logging.getLogger(__name__)
 
@@ -28,6 +34,19 @@ class UpdateResult:
     dry_run: bool
 
 
+def _parse_validated(data: object) -> Roster:
+    if not isinstance(data, dict):
+        raise RosterUpdateError("角色表根节点必须是对象")
+    try:
+        validate_roster_dict(data, min_characters=1)
+    except RosterBuildError as exc:
+        raise RosterUpdateError(f"角色表校验失败：{exc}") from exc
+    try:
+        return parse_roster(data)
+    except RosterError as exc:
+        raise RosterUpdateError(f"角色表校验失败：{exc}") from exc
+
+
 def fetch_roster(url: str, timeout: float = 30) -> Roster:
     request = Request(url, headers={"User-Agent": USER_AGENT})
     try:
@@ -40,10 +59,7 @@ def fetch_roster(url: str, timeout: float = 30) -> Roster:
         data = json.loads(payload)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise RosterUpdateError(f"远程角色表不是有效 JSON：{exc}") from exc
-    try:
-        return parse_roster(data)
-    except RosterError as exc:
-        raise RosterUpdateError(f"远程角色表校验失败：{exc}") from exc
+    return _parse_validated(data)
 
 
 def _roster_to_dict(roster: Roster) -> dict:
@@ -111,9 +127,10 @@ def update_roster(
 
     if from_file is not None:
         try:
-            new = load_roster_file(from_file)
-        except RosterError as exc:
+            data = json.loads(Path(from_file).read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise RosterUpdateError(f"角色表校验失败：{exc}") from exc
+        new = _parse_validated(data)
     elif url:
         new = fetch_roster(url)
     else:

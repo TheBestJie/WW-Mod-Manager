@@ -13,17 +13,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Input, Static
 
 from wwmm.errors import LayoutError
-
-
-def looks_like_mods_dir(path: Path) -> bool:
-    path = Path(path).expanduser()
-    if not path.is_dir():
-        return False
-    return (
-        (path / "character").exists()
-        or path.name.casefold() == "mods"
-        or (path.parent / "d3dx.ini").exists()
-    )
+from wwmm.paths import looks_like_mods_dir
 
 
 class SettingsScreen(Screen):
@@ -53,13 +43,17 @@ class SettingsScreen(Screen):
 
     def on_mount(self) -> None:
         status = self.query_one("#settings-status", Static)
-        if self.error:
-            status.update(f"[red]{escape(self.error)}[/]")
-        else:
-            status.update("[dim]尚未选择目录[/]")
-
         path_input = self.query_one("#mods-path", Input)
-        if not path_input.value:
+
+        if not self.first_run and self.app.config.mods_dir is not None:
+            path_input.value = str(self.app.config.mods_dir)
+            status.update("[dim]修改后点击保存[/]")
+        elif self.error:
+            status.update(f"[red]{escape(self.error)}[/]")
+            candidates = self.app.detector(self.app.home_dir)
+            if candidates:
+                path_input.value = str(candidates[0])
+        else:
             candidates = self.app.detector(self.app.home_dir)
             if candidates:
                 path_input.value = str(candidates[0])

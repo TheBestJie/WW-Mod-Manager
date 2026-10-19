@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from wwmm.errors import LayoutError
@@ -8,7 +10,14 @@ def test_creates_missing_dirs_and_others(tmp_path, roster):
     root = tmp_path / "Mods"
     (root / "character" / "denia").mkdir(parents=True)
     result = ensure_character_dirs(roster, root)
-    assert {p.name for p in result.created} == {"aemeath", "hsin", "lynae", "rover", "others"}
+    assert {p.name for p in result.created} == {
+        "aemeath",
+        "hsin",
+        "lynae",
+        "rover",
+        "sanhua",
+        "others",
+    }
     assert (root / "character" / "denia").is_dir()
     assert not result.errors
 
@@ -40,3 +49,18 @@ def test_file_with_character_name_is_reported_not_overwritten(tmp_path, roster):
 def test_missing_mods_root_is_rejected(tmp_path, roster):
     with pytest.raises(LayoutError):
         ensure_character_dirs(roster, tmp_path / "missing")
+
+
+def test_unsafe_folder_is_rejected_without_creating(tmp_path, roster):
+    root = tmp_path / "Mods"
+    (root / "character").mkdir(parents=True)
+    unsafe = replace(
+        roster.characters[0],
+        slug="evil",
+        folder="../evil",
+    )
+    unsafe_roster = replace(roster, characters=(unsafe,))
+    with pytest.raises(LayoutError):
+        ensure_character_dirs(unsafe_roster, root)
+    assert not (tmp_path / "evil").exists()
+    assert not (root / "evil").exists()

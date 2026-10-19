@@ -51,6 +51,6 @@ def toggle_mod(mod: Mod, enable: bool | None = None) -> Mod:
     return Mod(
         path=target,
         folder_name=target_name,
-        enabled=enable,
+        enabled=not target_name.startswith(DISABLED_PREFIX),
         ini_count=mod.ini_count,
     )

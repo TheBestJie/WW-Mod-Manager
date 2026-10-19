@@ -20,6 +20,17 @@
       "special": false
     },
     {
+      "slug": "sanhua",
+      "name_zh": "散华",
+      "name_en": "Sanhua",
+      "elements": ["冷凝"],
+      "pinyin": "sanhua",
+      "initials": "sh",
+      "aliases": ["散华", "sanhua"],
+      "folder": "sanhua",
+      "special": false
+    },
+    {
       "slug": "denia",
       "name_zh": "达妮娅",
       "name_en": "Denia",

@@ -3,7 +3,7 @@ import json
 import pytest
 
 from wwmm.errors import RosterError
-from wwmm.roster import load_effective_roster, parse_roster
+from wwmm.roster import load_bundled_roster, load_effective_roster, parse_roster
 
 
 def test_by_folder_is_case_insensitive(roster):
@@ -43,6 +43,21 @@ def test_others_is_appended_when_missing(roster_data):
     roster_data["characters"] = [c for c in roster_data["characters"] if c["slug"] != "others"]
     parsed = parse_roster(roster_data)
     assert parsed.by_slug("others") is not None
+
+
+@pytest.mark.parametrize("folder", ["/tmp/evil", "../evil", "a/b", "..", "."])
+def test_unsafe_folder_is_rejected(roster_data, folder):
+    roster_data["characters"][0]["folder"] = folder
+    with pytest.raises(RosterError):
+        parse_roster(roster_data)
+
+
+def test_non_utf8_local_roster_falls_back_to_bundled(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "roster.json").write_bytes(b"\xff\xfe\x00broken")
+    parsed = load_effective_roster(data_dir)
+    assert parsed.game_version == load_bundled_roster().game_version
 
 
 def test_local_roster_overrides_bundled(tmp_path):
