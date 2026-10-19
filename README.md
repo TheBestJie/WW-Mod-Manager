@@ -52,8 +52,12 @@ cd WW-Mod-Manager
 卸载：
 
 ```bash
-uv tool uninstall ww-mod-manager
+./uninstall.sh
 ```
+
+它会移除 `install.sh` 写入的 bash/zsh/fish PATH 配置块并卸载 uv tool，但保留
+配置、角色表、日志和 Mods 目录。只想卸载工具、保留 PATH 配置时用
+`./uninstall.sh --keep-shell-config`。
 
 ### 手动安装（开发）
 
