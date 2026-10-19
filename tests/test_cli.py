@@ -42,3 +42,4 @@ def test_update_dry_run_does_not_touch_fs(tmp_path, roster_file, monkeypatch):
     assert rc == 0
     assert not (mods / "character" / "aemeath").exists()
     assert not (tmp_path / "data" / "roster.json").exists()
+    assert not (tmp_path / "config" / "wwmm" / "config.toml").exists()

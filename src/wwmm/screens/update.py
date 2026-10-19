@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from rich.markup import escape
 from textual import work
 from textual.app import ComposeResult
@@ -15,7 +17,7 @@ from wwmm.roster_update import UpdateResult
 
 
 class UpdateScreen(ModalScreen[UpdateResult | None]):
-    BINDINGS = [Binding("escape", "cancel", "取消")]
+    BINDINGS: ClassVar[list[Binding]] = [Binding("escape", "cancel", "取消")]
 
     def compose(self) -> ComposeResult:
         with Vertical(id="update-box"):

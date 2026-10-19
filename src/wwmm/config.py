@@ -35,7 +35,9 @@ class ConfigStore:
         try:
             data = tomllib.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
-            log.warning("配置文件损坏，已移动到 %s: %s", self.path.with_name("config.toml.bad"), exc)
+            log.warning(
+                "配置文件损坏，已移动到 %s: %s", self.path.with_name("config.toml.bad"), exc
+            )
             try:
                 os.replace(self.path, self.path.with_name("config.toml.bad"))
             except OSError:

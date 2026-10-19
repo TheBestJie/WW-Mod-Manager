@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
@@ -12,7 +14,7 @@ from wwmm.constants import GROUP_ORDER
 
 
 class HomeScreen(Screen):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("slash", "search", "搜索"),
         Binding("s", "settings", "设置"),
         Binding("u", "update", "更新"),
@@ -57,10 +59,7 @@ class HomeScreen(Screen):
             mods = sum(entry.total_count for entry in entries)
             list_view.append(
                 ListItem(
-                    Static(
-                        f"[bold cyan]●[/] {name}  "
-                        f"{populated}/{len(entries)} 角色 · {mods} mods"
-                    )
+                    Static(f"[bold cyan]●[/] {name}  {populated}/{len(entries)} 角色 · {mods} mods")
                 )
             )
 

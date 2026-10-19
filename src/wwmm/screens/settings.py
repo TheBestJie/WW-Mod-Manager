@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import ClassVar
 
 from rich.markup import escape
 from textual.app import ComposeResult
@@ -26,7 +27,7 @@ def looks_like_mods_dir(path: Path) -> bool:
 
 
 class SettingsScreen(Screen):
-    BINDINGS = [Binding("escape", "cancel", "返回")]
+    BINDINGS: ClassVar[list[Binding]] = [Binding("escape", "cancel", "返回")]
 
     def __init__(self, first_run: bool = False, error: str | None = None) -> None:
         super().__init__()

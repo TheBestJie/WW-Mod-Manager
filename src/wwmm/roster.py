@@ -243,6 +243,10 @@ def ensure_character_dirs(roster: Roster, mods_root: Path) -> DirEnsureResult:
             continue
         result.created.append(target)
 
-    log.info("角色目录补全：创建 %d，跳过 %d，错误 %d",
-             len(result.created), len(result.skipped), len(result.errors))
+    log.info(
+        "角色目录补全：创建 %d，跳过 %d，错误 %d",
+        len(result.created),
+        len(result.skipped),
+        len(result.errors),
+    )
     return result

@@ -54,9 +54,7 @@ def test_rover_forms_merge():
 
 def test_build_fixture_matches_expected():
     built = _build()
-    expected = json.loads(
-        (FIXTURES / "expected_roster.json").read_text(encoding="utf-8")
-    )
+    expected = json.loads((FIXTURES / "expected_roster.json").read_text(encoding="utf-8"))
     assert built["game_version"] == "test"
     assert built["characters"] == expected["characters"]
 

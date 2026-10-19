@@ -45,8 +45,8 @@ def _run_update(args: argparse.Namespace) -> int:
 
     explicit_mods_dir = _selected_mods_dir(args)
     if explicit_mods_dir is not None:
+        # Per-invocation override; update must not write config (especially in dry-run).
         config.mods_dir = Path(explicit_mods_dir)
-        store.save(config)
 
     if config.mods_dir is None:
         print(
@@ -68,9 +68,7 @@ def _run_update(args: argparse.Namespace) -> int:
         return 1
 
     print(f"角色表版本：{result.game_version}")
-    print(
-        f"新增 {len(result.added)}，移除 {len(result.removed)}，变更 {len(result.changed)}"
-    )
+    print(f"新增 {len(result.added)}，移除 {len(result.removed)}，变更 {len(result.changed)}")
     print(f"写入：{result.path}" + ("（预演，未写入）" if result.dry_run else ""))
 
     if result.dry_run or args.no_create:

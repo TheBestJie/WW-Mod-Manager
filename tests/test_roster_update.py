@@ -10,9 +10,7 @@ def _write_local(data_dir, source, roster_file):
     data_dir.mkdir(parents=True, exist_ok=True)
     payload = json.loads(roster_file.read_text(encoding="utf-8"))
     payload["source"]["committed_at"] = source
-    (data_dir / "roster.json").write_text(
-        json.dumps(payload, ensure_ascii=False), encoding="utf-8"
-    )
+    (data_dir / "roster.json").write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     return (data_dir / "roster.json").read_bytes()
 
 

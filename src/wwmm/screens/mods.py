@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from rich.markup import escape
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -16,7 +18,7 @@ from wwmm.toggle import toggle_mod
 
 
 class ModsScreen(Screen):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("space", "toggle", "开关"),
         Binding("slash", "focus_filter", "过滤"),
         Binding("r", "refresh", "刷新"),
@@ -99,11 +101,7 @@ class ModsScreen(Screen):
 
     def _mod_label(self, mod: Mod) -> str:
         status = "●" if mod.enabled else "○"
-        suffix = (
-            f"[dim]{mod.ini_count} ini[/]"
-            if mod.ini_count
-            else "[yellow]⚠ 无 ini[/]"
-        )
+        suffix = f"[dim]{mod.ini_count} ini[/]" if mod.ini_count else "[yellow]⚠ 无 ini[/]"
         return f"{status} {escape(mod.display_name)}  {suffix}"
 
     def _update_detail(self, index: int | None) -> None:

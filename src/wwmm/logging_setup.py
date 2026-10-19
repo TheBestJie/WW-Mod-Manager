@@ -21,8 +21,6 @@ def setup_logging(state_dir: Path, *, verbose: bool = False) -> None:
         if isinstance(handler, RotatingFileHandler) and Path(handler.baseFilename) == log_path:
             return
 
-    handler = RotatingFileHandler(
-        log_path, maxBytes=1_000_000, backupCount=3, encoding="utf-8"
-    )
+    handler = RotatingFileHandler(log_path, maxBytes=1_000_000, backupCount=3, encoding="utf-8")
     handler.setFormatter(logging.Formatter(LOG_FORMAT))
     root.addHandler(handler)

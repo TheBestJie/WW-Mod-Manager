@@ -8,7 +8,7 @@ import os
 import sys
 import tempfile
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.request import Request, urlopen
 
@@ -79,9 +79,7 @@ def _resolve_upstream(repo: str, branch: str | None) -> tuple[str, str, str]:
     if not isinstance(commit_info, dict):
         raise RosterBuildError(f"无法读取 {repo} 的最新提交")
     sha = str(commit_info.get("sha", ""))
-    committed_at = str(
-        (commit_info.get("commit") or {}).get("committer", {}).get("date", "")
-    )
+    committed_at = str((commit_info.get("commit") or {}).get("committer", {}).get("date", ""))
     if not sha:
         raise RosterBuildError(f"{repo}@{branch} 没有 commit sha")
     return branch, sha, committed_at
@@ -115,9 +113,7 @@ def _write_atomic(path: Path, data: dict) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
-    tmp.write_text(
-        json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     os.replace(tmp, path)
 
 
@@ -132,9 +128,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--branch", default=None)
     parser.add_argument("--commit", default=None)
     parser.add_argument("--committed-at", default=None)
-    parser.add_argument(
-        "--overrides", type=Path, default=SCRIPT_DIR / "roster_overrides.json"
-    )
+    parser.add_argument("--overrides", type=Path, default=SCRIPT_DIR / "roster_overrides.json")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--check", action="store_true")
@@ -182,12 +176,8 @@ def main(argv: list[str] | None = None) -> int:
         if local_mode:
             branch = args.branch or "local"
             commit = args.commit or "local"
-            committed_at = args.committed_at or datetime.now(timezone.utc).isoformat()
-            if (
-                args.out.exists()
-                and _existing_commit(args.out) == commit
-                and not args.force
-            ):
+            committed_at = args.committed_at or datetime.now(UTC).isoformat()
+            if args.out.exists() and _existing_commit(args.out) == commit and not args.force:
                 print("unchanged")
                 return 0
             roles = json.loads(args.roleinfo.read_text(encoding="utf-8"))
@@ -197,11 +187,7 @@ def main(argv: list[str] | None = None) -> int:
             en = load_textmap(args.en)
         else:
             branch, commit, committed_at = _resolve_upstream(args.repo, args.branch)
-            if (
-                args.out.exists()
-                and _existing_commit(args.out) == commit
-                and not args.force
-            ):
+            if args.out.exists() and _existing_commit(args.out) == commit and not args.force:
                 print("upstream unchanged")
                 return 0
             with tempfile.TemporaryDirectory() as temp_dir:
@@ -240,9 +226,7 @@ def main(argv: list[str] | None = None) -> int:
                 old = {"characters": []}
             _print_diff(old, built)
         else:
-            print(
-                f"dry-run: would write {len(built['characters'])} characters to {args.out}"
-            )
+            print(f"dry-run: would write {len(built['characters'])} characters to {args.out}")
         return 0
 
     try:

@@ -12,7 +12,17 @@ def test_by_folder_is_case_insensitive(roster):
 
 def test_groups_are_complete_and_ordered(roster):
     groups = roster.groups()
-    assert list(groups) == ["冷凝", "热熔", "导电", "气动", "衍射", "湮灭", "多属性", "其他", "未分类"]
+    assert list(groups) == [
+        "冷凝",
+        "热熔",
+        "导电",
+        "气动",
+        "衍射",
+        "湮灭",
+        "多属性",
+        "其他",
+        "未分类",
+    ]
     assert [c.slug for c in groups["热熔"]] == ["aemeath", "denia"]
     assert [c.slug for c in groups["多属性"]] == ["rover"]
 

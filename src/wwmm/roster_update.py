@@ -78,7 +78,9 @@ def _load_existing(path: Path) -> Roster | None:
         return None
 
 
-def _diff(old: Roster | None, new: Roster) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+def _diff(
+    old: Roster | None, new: Roster
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
     if old is None:
         return tuple(sorted(c.slug for c in new.characters)), (), ()
     old_by_slug = {c.slug: c for c in old.characters}
@@ -86,8 +88,11 @@ def _diff(old: Roster | None, new: Roster) -> tuple[tuple[str, ...], tuple[str, 
     added = tuple(sorted(set(new_by_slug) - set(old_by_slug)))
     removed = tuple(sorted(set(old_by_slug) - set(new_by_slug)))
     changed = tuple(
-        sorted(slug for slug in set(old_by_slug) & set(new_by_slug)
-               if old_by_slug[slug] != new_by_slug[slug])
+        sorted(
+            slug
+            for slug in set(old_by_slug) & set(new_by_slug)
+            if old_by_slug[slug] != new_by_slug[slug]
+        )
     )
     return added, removed, changed
 

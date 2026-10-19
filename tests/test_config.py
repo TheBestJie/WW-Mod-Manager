@@ -4,9 +4,11 @@ from wwmm.paths import config_dir
 
 def test_roundtrip_with_unicode_path(tmp_path):
     store = ConfigStore(tmp_path)
-    cfg = Config(mods_dir=tmp_path / "Mods 目录 with spaces",
-                 roster_url="https://example.com/roster.json",
-                 auto_create_folders=False)
+    cfg = Config(
+        mods_dir=tmp_path / "Mods 目录 with spaces",
+        roster_url="https://example.com/roster.json",
+        auto_create_folders=False,
+    )
     store.save(cfg)
     assert store.load() == cfg
 

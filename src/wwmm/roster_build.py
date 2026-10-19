@@ -81,9 +81,7 @@ def _build_group(
     for role, _zh, _en in members:
         element = ELEMENT_BY_ID.get(role.get("ElementId"))
         if element is None:
-            raise RosterBuildError(
-                f"{name_en} 含未知 ElementId：{role.get('ElementId')!r}"
-            )
+            raise RosterBuildError(f"{name_en} 含未知 ElementId：{role.get('ElementId')!r}")
         if element not in elements:
             elements.append(element)
     elements.sort(key=GROUP_ORDER.index)
@@ -95,11 +93,7 @@ def _build_group(
         [
             name_zh,
             name_en,
-            *(
-                value
-                for member in members
-                for value in (member[1], member[2])
-            ),
+            *(value for member in members for value in (member[1], member[2])),
             slug,
             pinyin,
             initials,
@@ -147,10 +141,7 @@ def build_roster(
         group_name = "Rover" if name_en.startswith("Rover") else name_en
         grouped.setdefault(group_name, []).append((role, name_zh, name_en))
 
-    built = [
-        _build_group(name_en, members, overrides)
-        for name_en, members in grouped.items()
-    ]
+    built = [_build_group(name_en, members, overrides) for name_en, members in grouped.items()]
     built.sort(key=lambda item: (item[0] or 999999, item[1]["slug"]))
     characters = [character for _id, character in built]
 
@@ -191,9 +182,7 @@ def validate_roster_dict(data: dict, *, min_characters: int = 50) -> None:
     if not isinstance(characters, list):
         raise RosterBuildError("characters 必须是数组")
     if len(characters) < min_characters:
-        raise RosterBuildError(
-            f"角色数不足：{len(characters)} < {min_characters}"
-        )
+        raise RosterBuildError(f"角色数不足：{len(characters)} < {min_characters}")
 
     seen_slugs: set[str] = set()
     present_elements: set[str] = set()

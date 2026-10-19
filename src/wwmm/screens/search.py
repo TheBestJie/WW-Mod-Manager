@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from rich.markup import escape
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -14,7 +16,7 @@ from wwmm.search import filter_characters
 
 
 class SearchScreen(ModalScreen[CharacterEntry | None]):
-    BINDINGS = [Binding("escape", "cancel", "关闭")]
+    BINDINGS: ClassVar[list[Binding]] = [Binding("escape", "cancel", "关闭")]
 
     def __init__(self) -> None:
         super().__init__()

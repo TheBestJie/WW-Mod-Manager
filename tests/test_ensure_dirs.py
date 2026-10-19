@@ -1,7 +1,7 @@
 import pytest
 
 from wwmm.errors import LayoutError
-from wwmm.roster import DirEnsureResult, ensure_character_dirs
+from wwmm.roster import ensure_character_dirs
 
 
 def test_creates_missing_dirs_and_others(tmp_path, roster):
@@ -16,7 +16,7 @@ def test_creates_missing_dirs_and_others(tmp_path, roster):
 def test_case_insensitive_existing_dir_is_not_duplicated(tmp_path, roster):
     root = tmp_path / "Mods"
     (root / "character" / "DENIA").mkdir(parents=True)
-    result = ensure_character_dirs(roster, root)
+    ensure_character_dirs(roster, root)
     assert not (root / "character" / "denia").exists()
     assert (root / "character" / "DENIA").is_dir()
 

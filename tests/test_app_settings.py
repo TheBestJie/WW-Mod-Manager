@@ -35,14 +35,7 @@ async def test_valid_mods_dir_is_saved_and_scanned(app_without_mods, tmp_path):
 def test_detect_mods_dirs(tmp_path):
     home = tmp_path / "home"
     mods = (
-        home
-        / ".proton"
-        / "pfx"
-        / "drive_c"
-        / "Program Files"
-        / "XXMI Launcher"
-        / "WWMI"
-        / "Mods"
+        home / ".proton" / "pfx" / "drive_c" / "Program Files" / "XXMI Launcher" / "WWMI" / "Mods"
     )
     (mods / "character").mkdir(parents=True)
     assert detect_mods_dirs(home) == [mods]

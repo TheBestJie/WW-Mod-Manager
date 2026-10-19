@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
@@ -13,7 +15,7 @@ from wwmm.search import filter_characters
 
 
 class CharactersScreen(Screen):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[Binding]] = [
         Binding("slash", "focus_filter", "过滤"),
         Binding("h", "toggle_empty", "隐藏空角色"),
         Binding("escape", "app.pop_screen", "返回"),
@@ -51,8 +53,7 @@ class CharactersScreen(Screen):
         populated = sum(1 for entry in self._all_entries if entry.has_mods)
         mods = sum(entry.total_count for entry in self._all_entries)
         self.query_one("#char-header", Static).update(
-            f"[bold]{self.group}[/] · {populated}/{len(self._all_entries)} 角色"
-            f" · {mods} mods"
+            f"[bold]{self.group}[/] · {populated}/{len(self._all_entries)} 角色 · {mods} mods"
         )
 
         query = self.query_one("#char-filter", Input).value
