@@ -1,0 +1,1104 @@
+{
+  "schema_version": 1,
+  "game_version": "3.7",
+  "source": {
+    "repo": "Arikatsu/WutheringWaves_Data",
+    "branch": "3.7",
+    "commit": "local-3.7",
+    "committed_at": "2026-10-19T00:00:00Z"
+  },
+  "characters": [
+    {
+      "slug": "sanhua",
+      "name_zh": "散华",
+      "name_en": "Sanhua",
+      "elements": [
+        "冷凝"
+      ],
+      "pinyin": "sanhua",
+      "initials": "sh",
+      "aliases": [
+        "散华",
+        "Sanhua",
+        "sanhua",
+        "sh"
+      ],
+      "folder": "sanhua",
+      "special": false
+    },
+    {
+      "slug": "baizhi",
+      "name_zh": "白芷",
+      "name_en": "Baizhi",
+      "elements": [
+        "冷凝"
+      ],
+      "pinyin": "baizhi",
+      "initials": "bz",
+      "aliases": [
+        "白芷",
+        "Baizhi",
+        "baizhi",
+        "bz"
+      ],
+      "folder": "baizhi",
+      "special": false
+    },
+    {
+      "slug": "lingyang",
+      "name_zh": "凌阳",
+      "name_en": "Lingyang",
+      "elements": [
+        "冷凝"
+      ],
+      "pinyin": "lingyang",
+      "initials": "ly",
+      "aliases": [
+        "凌阳",
+        "Lingyang",
+        "lingyang",
+        "ly"
+      ],
+      "folder": "lingyang",
+      "special": false
+    },
+    {
+      "slug": "zhezhi",
+      "name_zh": "折枝",
+      "name_en": "Zhezhi",
+      "elements": [
+        "冷凝"
+      ],
+      "pinyin": "zhezhi",
+      "initials": "zz",
+      "aliases": [
+        "折枝",
+        "Zhezhi",
+        "zhezhi",
+        "zz"
+      ],
+      "folder": "zhezhi",
+      "special": false
+    },
+    {
+      "slug": "youhu",
+      "name_zh": "釉瑚",
+      "name_en": "Youhu",
+      "elements": [
+        "冷凝"
+      ],
+      "pinyin": "youhu",
+      "initials": "yh",
+      "aliases": [
+        "釉瑚",
+        "Youhu",
+        "youhu",
+        "yh"
+      ],
+      "folder": "youhu",
+      "special": false
+    },
+    {
+      "slug": "carlotta",
+      "name_zh": "珂莱塔",
+      "name_en": "Carlotta",
+      "elements": [
+        "冷凝"
+      ],
+      "pinyin": "kelaita",
+      "initials": "klt",
+      "aliases": [
+        "珂莱塔",
+        "Carlotta",
+        "carlotta",
+        "kelaita",
+        "klt"
+      ],
+      "folder": "carlotta",
+      "special": false
+    },
+    {
+      "slug": "hiyuki",
+      "name_zh": "绯雪",
+      "name_en": "Hiyuki",
+      "elements": [
+        "冷凝"
+      ],
+      "pinyin": "feixue",
+      "initials": "fx",
+      "aliases": [
+        "绯雪",
+        "Hiyuki",
+        "hiyuki",
+        "feixue",
+        "fx"
+      ],
+      "folder": "hiyuki",
+      "special": false
+    },
+    {
+      "slug": "lucilla",
+      "name_zh": "洛瑟菈",
+      "name_en": "Lucilla",
+      "elements": [
+        "冷凝"
+      ],
+      "pinyin": "luosela",
+      "initials": "lsl",
+      "aliases": [
+        "洛瑟菈",
+        "Lucilla",
+        "lucilla",
+        "luosela",
+        "lsl",
+        "露西拉"
+      ],
+      "folder": "lucilla",
+      "special": false
+    },
+    {
+      "slug": "suisui",
+      "name_zh": "穗穗",
+      "name_en": "Suisui",
+      "elements": [
+        "冷凝"
+      ],
+      "pinyin": "suisui",
+      "initials": "ss",
+      "aliases": [
+        "穗穗",
+        "Suisui",
+        "suisui",
+        "ss"
+      ],
+      "folder": "suisui",
+      "special": false
+    },
+    {
+      "slug": "chixia",
+      "name_zh": "炽霞",
+      "name_en": "Chixia",
+      "elements": [
+        "热熔"
+      ],
+      "pinyin": "chixia",
+      "initials": "cx",
+      "aliases": [
+        "炽霞",
+        "Chixia",
+        "chixia",
+        "cx"
+      ],
+      "folder": "chixia",
+      "special": false
+    },
+    {
+      "slug": "encore",
+      "name_zh": "安可",
+      "name_en": "Encore",
+      "elements": [
+        "热熔"
+      ],
+      "pinyin": "anke",
+      "initials": "ak",
+      "aliases": [
+        "安可",
+        "Encore",
+        "encore",
+        "anke",
+        "ak"
+      ],
+      "folder": "encore",
+      "special": false
+    },
+    {
+      "slug": "mortefi",
+      "name_zh": "莫特斐",
+      "name_en": "Mortefi",
+      "elements": [
+        "热熔"
+      ],
+      "pinyin": "motefei",
+      "initials": "mtf",
+      "aliases": [
+        "莫特斐",
+        "Mortefi",
+        "mortefi",
+        "motefei",
+        "mtf"
+      ],
+      "folder": "mortefi",
+      "special": false
+    },
+    {
+      "slug": "changli",
+      "name_zh": "长离",
+      "name_en": "Changli",
+      "elements": [
+        "热熔"
+      ],
+      "pinyin": "zhangli",
+      "initials": "zl",
+      "aliases": [
+        "长离",
+        "Changli",
+        "changli",
+        "zhangli",
+        "zl"
+      ],
+      "folder": "changli",
+      "special": false
+    },
+    {
+      "slug": "brant",
+      "name_zh": "布兰特",
+      "name_en": "Brant",
+      "elements": [
+        "热熔"
+      ],
+      "pinyin": "bulante",
+      "initials": "blt",
+      "aliases": [
+        "布兰特",
+        "Brant",
+        "brant",
+        "bulante",
+        "blt"
+      ],
+      "folder": "brant",
+      "special": false
+    },
+    {
+      "slug": "lupa",
+      "name_zh": "露帕",
+      "name_en": "Lupa",
+      "elements": [
+        "热熔"
+      ],
+      "pinyin": "lupa",
+      "initials": "lp",
+      "aliases": [
+        "露帕",
+        "Lupa",
+        "lupa",
+        "lp"
+      ],
+      "folder": "lupa",
+      "special": false
+    },
+    {
+      "slug": "galbrena",
+      "name_zh": "嘉贝莉娜",
+      "name_en": "Galbrena",
+      "elements": [
+        "热熔"
+      ],
+      "pinyin": "jiabeilina",
+      "initials": "jbln",
+      "aliases": [
+        "嘉贝莉娜",
+        "Galbrena",
+        "galbrena",
+        "jiabeilina",
+        "jbln"
+      ],
+      "folder": "galbrena",
+      "special": false
+    },
+    {
+      "slug": "mornye",
+      "name_zh": "莫宁",
+      "name_en": "Mornye",
+      "elements": [
+        "热熔"
+      ],
+      "pinyin": "moning",
+      "initials": "mn",
+      "aliases": [
+        "莫宁",
+        "Mornye",
+        "mornye",
+        "moning",
+        "mn"
+      ],
+      "folder": "mornye",
+      "special": false
+    },
+    {
+      "slug": "aemeath",
+      "name_zh": "爱弥斯",
+      "name_en": "Aemeath",
+      "elements": [
+        "热熔"
+      ],
+      "pinyin": "aimisi",
+      "initials": "ams",
+      "aliases": [
+        "爱弥斯",
+        "Aemeath",
+        "aemeath",
+        "aimisi",
+        "ams"
+      ],
+      "folder": "aemeath",
+      "special": false
+    },
+    {
+      "slug": "denia",
+      "name_zh": "达妮娅",
+      "name_en": "Denia",
+      "elements": [
+        "热熔"
+      ],
+      "pinyin": "daniya",
+      "initials": "dny",
+      "aliases": [
+        "达妮娅",
+        "Denia",
+        "denia",
+        "daniya",
+        "dny"
+      ],
+      "folder": "denia",
+      "special": false
+    },
+    {
+      "slug": "jingran",
+      "name_zh": "景燃",
+      "name_en": "Jingran",
+      "elements": [
+        "热熔"
+      ],
+      "pinyin": "jingran",
+      "initials": "jr",
+      "aliases": [
+        "景燃",
+        "Jingran",
+        "jingran",
+        "jr"
+      ],
+      "folder": "jingran",
+      "special": false
+    },
+    {
+      "slug": "calcharo",
+      "name_zh": "卡卡罗",
+      "name_en": "Calcharo",
+      "elements": [
+        "导电"
+      ],
+      "pinyin": "kakaluo",
+      "initials": "kkl",
+      "aliases": [
+        "卡卡罗",
+        "Calcharo",
+        "calcharo",
+        "kakaluo",
+        "kkl"
+      ],
+      "folder": "calcharo",
+      "special": false
+    },
+    {
+      "slug": "yinlin",
+      "name_zh": "吟霖",
+      "name_en": "Yinlin",
+      "elements": [
+        "导电"
+      ],
+      "pinyin": "yinlin",
+      "initials": "yl",
+      "aliases": [
+        "吟霖",
+        "Yinlin",
+        "yinlin",
+        "yl"
+      ],
+      "folder": "yinlin",
+      "special": false
+    },
+    {
+      "slug": "yuanwu",
+      "name_zh": "渊武",
+      "name_en": "Yuanwu",
+      "elements": [
+        "导电"
+      ],
+      "pinyin": "yuanwu",
+      "initials": "yw",
+      "aliases": [
+        "渊武",
+        "Yuanwu",
+        "yuanwu",
+        "yw"
+      ],
+      "folder": "yuanwu",
+      "special": false
+    },
+    {
+      "slug": "jinhsi",
+      "name_zh": "今汐",
+      "name_en": "Jinhsi",
+      "elements": [
+        "衍射"
+      ],
+      "pinyin": "jinxi",
+      "initials": "jx",
+      "aliases": [
+        "今汐",
+        "Jinhsi",
+        "jinhsi",
+        "jinxi",
+        "jx"
+      ],
+      "folder": "jinhsi",
+      "special": false
+    },
+    {
+      "slug": "xiangliyao",
+      "name_zh": "相里要",
+      "name_en": "Xiangli Yao",
+      "elements": [
+        "导电"
+      ],
+      "pinyin": "xiangliyao",
+      "initials": "xly",
+      "aliases": [
+        "相里要",
+        "Xiangli Yao",
+        "xiangliyao",
+        "xly"
+      ],
+      "folder": "xiangliyao",
+      "special": false
+    },
+    {
+      "slug": "augusta",
+      "name_zh": "奥古斯塔",
+      "name_en": "Augusta",
+      "elements": [
+        "导电"
+      ],
+      "pinyin": "aogusita",
+      "initials": "agst",
+      "aliases": [
+        "奥古斯塔",
+        "Augusta",
+        "augusta",
+        "aogusita",
+        "agst"
+      ],
+      "folder": "augusta",
+      "special": false
+    },
+    {
+      "slug": "buling",
+      "name_zh": "卜灵",
+      "name_en": "Buling",
+      "elements": [
+        "导电"
+      ],
+      "pinyin": "boling",
+      "initials": "bl",
+      "aliases": [
+        "卜灵",
+        "Buling",
+        "buling",
+        "boling",
+        "bl"
+      ],
+      "folder": "buling",
+      "special": false
+    },
+    {
+      "slug": "rebecca",
+      "name_zh": "丽贝卡",
+      "name_en": "Rebecca",
+      "elements": [
+        "导电"
+      ],
+      "pinyin": "libeika",
+      "initials": "lbk",
+      "aliases": [
+        "丽贝卡",
+        "Rebecca",
+        "rebecca",
+        "libeika",
+        "lbk"
+      ],
+      "folder": "rebecca",
+      "special": false
+    },
+    {
+      "slug": "rover",
+      "name_zh": "漂泊者",
+      "name_en": "Rover",
+      "elements": [
+        "导电",
+        "气动",
+        "衍射",
+        "湮灭"
+      ],
+      "pinyin": "piaobozhe",
+      "initials": "pbz",
+      "aliases": [
+        "漂泊者",
+        "Rover",
+        "漂泊者·导电",
+        "Rover: Electro",
+        "漂泊者·气动",
+        "Rover: Aero",
+        "漂泊者·衍射",
+        "Rover: Spectro",
+        "漂泊者·湮灭",
+        "Rover: Havoc",
+        "rover",
+        "piaobozhe",
+        "pbz"
+      ],
+      "folder": "rover",
+      "special": false
+    },
+    {
+      "slug": "hsin",
+      "name_zh": "心",
+      "name_en": "Hsin",
+      "elements": [
+        "导电"
+      ],
+      "pinyin": "xin",
+      "initials": "x",
+      "aliases": [
+        "心",
+        "Hsin",
+        "hsin",
+        "xin",
+        "x",
+        "心月狐",
+        "xinyuehu"
+      ],
+      "folder": "hsin",
+      "special": false
+    },
+    {
+      "slug": "suoming",
+      "name_zh": "锁暝",
+      "name_en": "Suoming",
+      "elements": [
+        "导电"
+      ],
+      "pinyin": "suoming",
+      "initials": "sm",
+      "aliases": [
+        "锁暝",
+        "Suoming",
+        "suoming",
+        "sm"
+      ],
+      "folder": "suoming",
+      "special": false
+    },
+    {
+      "slug": "yangyang",
+      "name_zh": "秧秧",
+      "name_en": "Yangyang",
+      "elements": [
+        "气动"
+      ],
+      "pinyin": "yangyang",
+      "initials": "yy",
+      "aliases": [
+        "秧秧",
+        "Yangyang",
+        "yangyang",
+        "yy"
+      ],
+      "folder": "yangyang",
+      "special": false
+    },
+    {
+      "slug": "aalto",
+      "name_zh": "秋水",
+      "name_en": "Aalto",
+      "elements": [
+        "气动"
+      ],
+      "pinyin": "qiushui",
+      "initials": "qs",
+      "aliases": [
+        "秋水",
+        "Aalto",
+        "aalto",
+        "qiushui",
+        "qs"
+      ],
+      "folder": "aalto",
+      "special": false
+    },
+    {
+      "slug": "jiyan",
+      "name_zh": "忌炎",
+      "name_en": "Jiyan",
+      "elements": [
+        "气动"
+      ],
+      "pinyin": "jiyan",
+      "initials": "jy",
+      "aliases": [
+        "忌炎",
+        "Jiyan",
+        "jiyan",
+        "jy"
+      ],
+      "folder": "jiyan",
+      "special": false
+    },
+    {
+      "slug": "jianxin",
+      "name_zh": "鉴心",
+      "name_en": "Jianxin",
+      "elements": [
+        "气动"
+      ],
+      "pinyin": "jianxin",
+      "initials": "jx",
+      "aliases": [
+        "鉴心",
+        "Jianxin",
+        "jianxin",
+        "jx"
+      ],
+      "folder": "jianxin",
+      "special": false
+    },
+    {
+      "slug": "ciaccona",
+      "name_zh": "夏空",
+      "name_en": "Ciaccona",
+      "elements": [
+        "气动"
+      ],
+      "pinyin": "xiakong",
+      "initials": "xk",
+      "aliases": [
+        "夏空",
+        "Ciaccona",
+        "ciaccona",
+        "xiakong",
+        "xk"
+      ],
+      "folder": "ciaccona",
+      "special": false
+    },
+    {
+      "slug": "cartethyia",
+      "name_zh": "卡提希娅",
+      "name_en": "Cartethyia",
+      "elements": [
+        "气动"
+      ],
+      "pinyin": "katixiya",
+      "initials": "ktxy",
+      "aliases": [
+        "卡提希娅",
+        "Cartethyia",
+        "cartethyia",
+        "katixiya",
+        "ktxy"
+      ],
+      "folder": "cartethyia",
+      "special": false
+    },
+    {
+      "slug": "iuno",
+      "name_zh": "尤诺",
+      "name_en": "Iuno",
+      "elements": [
+        "气动"
+      ],
+      "pinyin": "younuo",
+      "initials": "yn",
+      "aliases": [
+        "尤诺",
+        "Iuno",
+        "iuno",
+        "younuo",
+        "yn"
+      ],
+      "folder": "iuno",
+      "special": false
+    },
+    {
+      "slug": "qiuyuan",
+      "name_zh": "仇远",
+      "name_en": "Qiuyuan",
+      "elements": [
+        "气动"
+      ],
+      "pinyin": "chouyuan",
+      "initials": "cy",
+      "aliases": [
+        "仇远",
+        "Qiuyuan",
+        "qiuyuan",
+        "chouyuan",
+        "cy"
+      ],
+      "folder": "qiuyuan",
+      "special": false
+    },
+    {
+      "slug": "sigrika",
+      "name_zh": "西格莉卡",
+      "name_en": "Sigrika",
+      "elements": [
+        "气动"
+      ],
+      "pinyin": "xigelika",
+      "initials": "xglk",
+      "aliases": [
+        "西格莉卡",
+        "Sigrika",
+        "sigrika",
+        "xigelika",
+        "xglk"
+      ],
+      "folder": "sigrika",
+      "special": false
+    },
+    {
+      "slug": "qingxiao",
+      "name_zh": "清宵",
+      "name_en": "Qingxiao",
+      "elements": [
+        "气动"
+      ],
+      "pinyin": "qingxiao",
+      "initials": "qx",
+      "aliases": [
+        "清宵",
+        "Qingxiao",
+        "qingxiao",
+        "qx",
+        "青霄"
+      ],
+      "folder": "qingxiao",
+      "special": false
+    },
+    {
+      "slug": "verina",
+      "name_zh": "维里奈",
+      "name_en": "Verina",
+      "elements": [
+        "衍射"
+      ],
+      "pinyin": "weilinai",
+      "initials": "wln",
+      "aliases": [
+        "维里奈",
+        "Verina",
+        "verina",
+        "weilinai",
+        "wln"
+      ],
+      "folder": "verina",
+      "special": false
+    },
+    {
+      "slug": "lumi",
+      "name_zh": "灯灯",
+      "name_en": "Lumi",
+      "elements": [
+        "导电"
+      ],
+      "pinyin": "dengdeng",
+      "initials": "dd",
+      "aliases": [
+        "灯灯",
+        "Lumi",
+        "lumi",
+        "dengdeng",
+        "dd"
+      ],
+      "folder": "lumi",
+      "special": false
+    },
+    {
+      "slug": "shorekeeper",
+      "name_zh": "守岸人",
+      "name_en": "Shorekeeper",
+      "elements": [
+        "衍射"
+      ],
+      "pinyin": "shouanren",
+      "initials": "sar",
+      "aliases": [
+        "守岸人",
+        "Shorekeeper",
+        "shorekeeper",
+        "shouanren",
+        "sar"
+      ],
+      "folder": "shorekeeper",
+      "special": false
+    },
+    {
+      "slug": "phoebe",
+      "name_zh": "菲比",
+      "name_en": "Phoebe",
+      "elements": [
+        "衍射"
+      ],
+      "pinyin": "feibi",
+      "initials": "fb",
+      "aliases": [
+        "菲比",
+        "Phoebe",
+        "phoebe",
+        "feibi",
+        "fb"
+      ],
+      "folder": "phoebe",
+      "special": false
+    },
+    {
+      "slug": "zani",
+      "name_zh": "赞妮",
+      "name_en": "Zani",
+      "elements": [
+        "衍射"
+      ],
+      "pinyin": "zanni",
+      "initials": "zn",
+      "aliases": [
+        "赞妮",
+        "Zani",
+        "zani",
+        "zanni",
+        "zn"
+      ],
+      "folder": "zani",
+      "special": false
+    },
+    {
+      "slug": "chisa",
+      "name_zh": "千咲",
+      "name_en": "Chisa",
+      "elements": [
+        "湮灭"
+      ],
+      "pinyin": "qianxiao",
+      "initials": "qx",
+      "aliases": [
+        "千咲",
+        "Chisa",
+        "chisa",
+        "qianxiao",
+        "qx"
+      ],
+      "folder": "chisa",
+      "special": false
+    },
+    {
+      "slug": "lynae",
+      "name_zh": "琳奈",
+      "name_en": "Lynae",
+      "elements": [
+        "衍射"
+      ],
+      "pinyin": "linnai",
+      "initials": "ln",
+      "aliases": [
+        "琳奈",
+        "Lynae",
+        "lynae",
+        "linnai",
+        "ln"
+      ],
+      "folder": "lynae",
+      "special": false
+    },
+    {
+      "slug": "luukherssen",
+      "name_zh": "陆·赫斯",
+      "name_en": "Luuk Herssen",
+      "elements": [
+        "衍射"
+      ],
+      "pinyin": "luhesi",
+      "initials": "lhs",
+      "aliases": [
+        "陆·赫斯",
+        "Luuk Herssen",
+        "luukherssen",
+        "luhesi",
+        "lhs"
+      ],
+      "folder": "luukherssen",
+      "special": false
+    },
+    {
+      "slug": "lucy",
+      "name_zh": "露西",
+      "name_en": "Lucy",
+      "elements": [
+        "衍射"
+      ],
+      "pinyin": "luxi",
+      "initials": "lx",
+      "aliases": [
+        "露西",
+        "Lucy",
+        "lucy",
+        "luxi",
+        "lx"
+      ],
+      "folder": "lucy",
+      "special": false
+    },
+    {
+      "slug": "taoqi",
+      "name_zh": "桃祈",
+      "name_en": "Taoqi",
+      "elements": [
+        "湮灭"
+      ],
+      "pinyin": "taoqi",
+      "initials": "tq",
+      "aliases": [
+        "桃祈",
+        "Taoqi",
+        "taoqi",
+        "tq"
+      ],
+      "folder": "taoqi",
+      "special": false
+    },
+    {
+      "slug": "danjin",
+      "name_zh": "丹瑾",
+      "name_en": "Danjin",
+      "elements": [
+        "湮灭"
+      ],
+      "pinyin": "danjin",
+      "initials": "dj",
+      "aliases": [
+        "丹瑾",
+        "Danjin",
+        "danjin",
+        "dj"
+      ],
+      "folder": "danjin",
+      "special": false
+    },
+    {
+      "slug": "camellya",
+      "name_zh": "椿",
+      "name_en": "Camellya",
+      "elements": [
+        "湮灭"
+      ],
+      "pinyin": "chun",
+      "initials": "c",
+      "aliases": [
+        "椿",
+        "Camellya",
+        "camellya",
+        "chun",
+        "c"
+      ],
+      "folder": "camellya",
+      "special": false
+    },
+    {
+      "slug": "roccia",
+      "name_zh": "洛可可",
+      "name_en": "Roccia",
+      "elements": [
+        "湮灭"
+      ],
+      "pinyin": "luokeke",
+      "initials": "lkk",
+      "aliases": [
+        "洛可可",
+        "Roccia",
+        "roccia",
+        "luokeke",
+        "lkk"
+      ],
+      "folder": "roccia",
+      "special": false
+    },
+    {
+      "slug": "cantarella",
+      "name_zh": "坎特蕾拉",
+      "name_en": "Cantarella",
+      "elements": [
+        "湮灭"
+      ],
+      "pinyin": "kanteleila",
+      "initials": "ktll",
+      "aliases": [
+        "坎特蕾拉",
+        "Cantarella",
+        "cantarella",
+        "kanteleila",
+        "ktll"
+      ],
+      "folder": "cantarella",
+      "special": false
+    },
+    {
+      "slug": "phrolova",
+      "name_zh": "弗洛洛",
+      "name_en": "Phrolova",
+      "elements": [
+        "湮灭"
+      ],
+      "pinyin": "fuluoluo",
+      "initials": "fll",
+      "aliases": [
+        "弗洛洛",
+        "Phrolova",
+        "phrolova",
+        "fuluoluo",
+        "fll"
+      ],
+      "folder": "phrolova",
+      "special": false
+    },
+    {
+      "slug": "yangyangxuanling",
+      "name_zh": "秧秧·玄翎",
+      "name_en": "Yangyang: Xuanling",
+      "elements": [
+        "湮灭"
+      ],
+      "pinyin": "yangyangxuanling",
+      "initials": "yyxl",
+      "aliases": [
+        "秧秧·玄翎",
+        "Yangyang: Xuanling",
+        "yangyangxuanling",
+        "yyxl"
+      ],
+      "folder": "yangyangxuanling",
+      "special": false
+    },
+    {
+      "slug": "others",
+      "name_zh": "其他",
+      "name_en": "Others",
+      "elements": [],
+      "pinyin": "qita",
+      "initials": "qt",
+      "aliases": [
+        "其他",
+        "others"
+      ],
+      "folder": "others",
+      "special": true
+    }
+  ]
+}

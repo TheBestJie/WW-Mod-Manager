@@ -1,0 +1,15 @@
+{
+  "slugs": {
+    "Rover": "rover",
+    "Shorekeeper": "shorekeeper",
+    "Yangyang: Xuanling": "yangyangxuanling"
+  },
+  "aliases": {
+    "Qingxiao": ["青霄"],
+    "Hsin": ["心月狐", "xinyuehu"],
+    "Lucilla": ["露西拉", "luosela"],
+    "Lucy": ["luxi"],
+    "Suoming": ["锁暝"],
+    "Rover": ["漂泊者·衍射", "漂泊者·湮灭", "漂泊者·气动", "漂泊者·导电"]
+  }
+}
