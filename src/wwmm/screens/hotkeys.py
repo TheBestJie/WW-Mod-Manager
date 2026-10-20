@@ -87,7 +87,7 @@ class HotkeysScreen(ModalScreen[None]):
             padding=(0, 1),
             expand=True,
         )
-        table.add_column("按键", style="bold yellow", width=14, no_wrap=True)
+        table.add_column("按键", style="bold yellow", min_width=14, no_wrap=True)
         table.add_column("功能（ini 段落）", ratio=3, no_wrap=True, overflow="ellipsis")
         table.add_column("来源", style="dim", ratio=2, no_wrap=True, overflow="ellipsis")
         for hotkey in rows:

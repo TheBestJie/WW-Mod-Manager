@@ -33,6 +33,7 @@ class ModsScreen(Screen):
         self.slug = slug
         self._entry: CharacterEntry | None = None
         self._visible: list[Mod] = []
+        self._skip_resume_refresh = False
 
     def compose(self) -> ComposeResult:
         with Vertical():
@@ -47,6 +48,9 @@ class ModsScreen(Screen):
         self.query_one("#mods", ListView).focus()
 
     def on_screen_resume(self) -> None:
+        if self._skip_resume_refresh:
+            self._skip_resume_refresh = False
+            return
         self.refresh_view()
 
     @property
@@ -58,14 +62,13 @@ class ModsScreen(Screen):
         self._entry = snapshot.find(self.slug)
         list_view = self.query_one("#mods", ListView)
 
-        current_base = None
+        current_folder = None
         if (
             self._visible
             and list_view.index is not None
             and 0 <= list_view.index < len(self._visible)
         ):
-            current_base = self._visible[list_view.index].base_name
-        selected_base = keep_base or current_base
+            current_folder = self._visible[list_view.index].folder_name
 
         header = self.query_one("#mod-header", Static)
         if self._entry is None:
@@ -90,9 +93,14 @@ class ModsScreen(Screen):
             list_view.append(ListItem(Static(self._mod_label(mod))))
 
         index = 0
-        if selected_base is not None:
+        if keep_base is not None:
             for position, mod in enumerate(self._visible):
-                if mod.base_name == selected_base:
+                if mod.base_name == keep_base:
+                    index = position
+                    break
+        elif current_folder is not None:
+            for position, mod in enumerate(self._visible):
+                if mod.folder_name == current_folder:
                     index = position
                     break
         if self._visible:
@@ -162,6 +170,7 @@ class ModsScreen(Screen):
         mod = self._selected_mod()
         if mod is None:
             return
+        self._skip_resume_refresh = True
         self.app.push_screen(HotkeysScreen(mod, parse_mod_hotkeys(mod.path)))
 
     def action_focus_filter(self) -> None:

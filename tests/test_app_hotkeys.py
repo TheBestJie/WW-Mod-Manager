@@ -2,7 +2,7 @@ import io
 
 from rich.console import Console
 from textual.containers import VerticalScroll
-from textual.widgets import Input, Static
+from textual.widgets import Input, ListView, Static
 
 from wwmm.hotkeys import Hotkey, HotkeyKind
 from wwmm.models import Mod
@@ -48,8 +48,14 @@ async def test_modal_warns_when_mod_disabled(app, tmp_path):
     async with app.run_test(size=(100, 30)) as pilot:
         app.push_screen(HotkeysScreen(_mod(tmp_path, enabled=False), _sample()))
         await pilot.pause()
-        warning = app.screen.query_one("#hotkey-warning", Static)
+        screen = app.screen
+        warning = screen.query_one("#hotkey-warning", Static)
         assert "不会生效" in str(warning.content)
+        assert screen.hotkeys
+        table = screen.query_one("#hotkeys-table-switch", Static).content
+        console = Console(width=84, record=True, file=io.StringIO())
+        console.print(table)
+        assert "Ctrl+0" in console.export_text()
 
 
 async def test_modal_shows_empty_state(app, tmp_path):
@@ -113,8 +119,11 @@ async def test_m_warns_for_disabled_mod(app, mods_tree):
         await pilot.pause()
         await pilot.press("m")
         await pilot.pause()
-        assert isinstance(app.screen, HotkeysScreen)
-        assert "不会生效" in str(app.screen.query_one("#hotkey-warning", Static).content)
+        screen = app.screen
+        assert isinstance(screen, HotkeysScreen)
+        assert "不会生效" in str(screen.query_one("#hotkey-warning", Static).content)
+        assert [(h.section, h.display_key) for h in screen.hotkeys] == [("KeyHair", "Ctrl+0")]
+        assert screen.query_one("#hotkeys-table-switch", Static)
 
 
 async def test_m_shows_empty_state_without_keys(app):
@@ -147,3 +156,55 @@ async def test_m_does_not_hijack_filter_input(app):
         await pilot.pause()
         assert isinstance(app.screen, ModsScreen)
         assert app.screen.query_one("#mod-filter", Input).value == "m"
+
+
+async def test_modal_does_not_truncate_long_key(app, tmp_path):
+    hotkeys = [Hotkey("Ctrl+Alt+Shift+小键盘 1", "KeyLong", "mod.ini", HotkeyKind.SWITCH)]
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(HotkeysScreen(_mod(tmp_path), hotkeys))
+        await pilot.pause()
+        table = app.screen.query_one("#hotkeys-table-switch", Static).content
+        console = Console(width=84, record=True, file=io.StringIO())
+        console.print(table)
+        assert "Ctrl+Alt+Shift+小键盘 1" in console.export_text()
+
+
+async def test_closing_hotkey_modal_keeps_selection_and_skips_rescan(app, mods_tree, monkeypatch):
+    denia = mods_tree / "character" / "denia"
+    (denia / "Foo").mkdir()
+    disabled = denia / "DISABLED_Foo"
+    disabled.mkdir()
+    (disabled / "mod.ini").write_text("[KeyHair]\nkey = CTRL 0\ntype = cycle\n", encoding="utf-8")
+
+    calls = 0
+    original = app.reload_snapshot
+
+    def counting():
+        nonlocal calls
+        calls += 1
+        return original()
+
+    monkeypatch.setattr(app, "reload_snapshot", counting)
+
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(ModsScreen("denia"))
+        await pilot.pause()
+        screen = app.screen
+        list_view = screen.query_one("#mods", ListView)
+        index = next(
+            position
+            for position, mod in enumerate(screen.visible_mods)
+            if mod.folder_name == "DISABLED_Foo"
+        )
+        list_view.index = index
+        await pilot.pause()
+        calls_before = calls
+
+        await pilot.press("m")
+        await pilot.pause()
+        assert isinstance(app.screen, HotkeysScreen)
+        await pilot.press("escape")
+        await pilot.pause()
+
+        assert calls == calls_before
+        assert screen.visible_mods[list_view.index].folder_name == "DISABLED_Foo"
