@@ -1,6 +1,8 @@
+import inspect
 import subprocess
 
 from wwmm import clipboard
+from wwmm.app import WWMMApp
 
 
 def test_returns_false_when_no_tool_available(monkeypatch):
@@ -93,3 +95,7 @@ def test_timeout_falls_back(monkeypatch):
     monkeypatch.setattr(clipboard.subprocess, "run", fake_run)
     assert clipboard.copy_with_command("路径") is True
     assert calls[1][0].endswith("xclip")
+
+
+def test_app_copy_text_is_async():
+    assert inspect.iscoroutinefunction(WWMMApp.copy_text)
