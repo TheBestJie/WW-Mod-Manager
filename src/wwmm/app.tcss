@@ -18,3 +18,46 @@ Screen {
 Footer {
     background: $panel;
 }
+
+HotkeysScreen {
+    align: center middle;
+}
+
+#hotkeys-box {
+    width: 90%;
+    max-width: 120;
+    height: 85%;
+    border: round $primary;
+    background: $surface;
+    padding: 0 1;
+}
+
+#hotkeys-header {
+    height: auto;
+    padding-top: 1;
+}
+
+#hotkey-warning {
+    color: $warning;
+    padding-top: 1;
+}
+
+#hotkeys-scroll {
+    height: 1fr;
+    padding-top: 1;
+}
+
+.hotkey-group {
+    color: $accent;
+    text-style: bold;
+    padding-top: 1;
+}
+
+.hotkey-table {
+    width: 1fr;
+}
+
+#hotkeys-hint {
+    height: 1;
+    color: $text-muted;
+}
