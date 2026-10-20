@@ -150,12 +150,21 @@ class ModsScreen(Screen):
             index = 0
         return self._visible[index]
 
-    def action_copy_path(self) -> None:
+    async def action_copy_path(self) -> None:
         mod = self._selected_mod()
         if mod is None:
             return
-        self.app.copy_text(str(mod.path))
-        self.notify(str(mod.path), title="已复制 mod 路径")
+        path = mod.path.absolute()
+        copied = await self.app.copy_text(str(path))
+        if copied:
+            self.notify(str(path), title="已复制 mod 路径", markup=False)
+        else:
+            self.notify(
+                f"{path}\n未找到桌面剪贴板工具，已改用终端 OSC 52",
+                title="复制可能未生效",
+                severity="warning",
+                markup=False,
+            )
 
     def action_toggle(self) -> None:
         mod = self._selected_mod()

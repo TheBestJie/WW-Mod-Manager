@@ -101,16 +101,24 @@ class CharactersScreen(Screen):
     def action_focus_filter(self) -> None:
         self.query_one("#char-filter", Input).focus()
 
-    def action_copy_path(self) -> None:
+    async def action_copy_path(self) -> None:
         if not self._visible:
             return
         list_view = self.query_one("#characters", ListView)
         index = list_view.index or 0
         if index >= len(self._visible):
             index = 0
-        entry = self._visible[index]
-        self.app.copy_text(str(entry.path))
-        self.notify(str(entry.path), title="已复制角色路径")
+        path = self._visible[index].path.absolute()
+        copied = await self.app.copy_text(str(path))
+        if copied:
+            self.notify(str(path), title="已复制角色路径", markup=False)
+        else:
+            self.notify(
+                f"{path}\n未找到桌面剪贴板工具，已改用终端 OSC 52",
+                title="复制可能未生效",
+                severity="warning",
+                markup=False,
+            )
 
     def action_toggle_empty(self) -> None:
         self.hide_empty = not self.hide_empty

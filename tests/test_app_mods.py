@@ -1,4 +1,6 @@
-from textual.widgets import ListView, Static
+from pathlib import Path
+
+from textual.widgets import Input, ListView, Static
 
 from wwmm.screens.characters import CharactersScreen
 from wwmm.screens.mods import ModsScreen
@@ -76,6 +78,12 @@ async def test_c_copies_selected_mod_path(app, monkeypatch):
 
 async def test_c_copies_disabled_mod_path(app, monkeypatch):
     monkeypatch.setattr("wwmm.app.copy_with_command", lambda text: True)
+    notifications = []
+    monkeypatch.setattr(
+        app,
+        "notify",
+        lambda message, **kwargs: notifications.append((message, kwargs)),
+    )
     async with app.run_test(size=(100, 30)) as pilot:
         app.push_screen(ModsScreen("aemeath"))
         await pilot.pause()
@@ -87,5 +95,35 @@ async def test_c_copies_disabled_mod_path(app, monkeypatch):
         list_view.index = index
         await pilot.press("c")
         await pilot.pause()
-        assert app.clipboard == str(screen.visible_mods[index].path)
+        path = str(screen.visible_mods[index].path.absolute())
+        assert app.clipboard == path
         assert "DISABLED_" in app.clipboard
+        assert notifications[-1][0] == path
+        assert notifications[-1][1]["markup"] is False
+
+
+async def test_c_in_mod_filter_does_not_copy(app, monkeypatch):
+    monkeypatch.setattr("wwmm.app.copy_with_command", lambda text: True)
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(ModsScreen("denia"))
+        await pilot.pause()
+        await pilot.press("slash")
+        await pilot.press("c")
+        await pilot.pause()
+        assert app.screen.query_one("#mod-filter", Input).value == "c"
+        assert app.clipboard == ""
+
+
+async def test_c_copies_absolute_path_for_relative_mods_dir(app, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("wwmm.app.copy_with_command", lambda text: True)
+    app.config.mods_dir = Path("Mods")
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(ModsScreen("denia"))
+        await pilot.pause()
+        screen = app.screen
+        mod = screen.visible_mods[0]
+        await pilot.press("c")
+        await pilot.pause()
+        assert Path(app.clipboard).is_absolute()
+        assert Path(app.clipboard) == tmp_path / "Mods/character/denia" / mod.folder_name

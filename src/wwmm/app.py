@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from pathlib import Path
 
@@ -109,7 +110,10 @@ class WWMMApp(App):
         self._ensure_character_dirs()
         return self.reload_snapshot()
 
-    def copy_text(self, text: str) -> None:
-        """Copy text to the terminal clipboard and desktop clipboard tools."""
+    async def copy_text(self, text: str) -> bool:
+        """Copy text to the terminal clipboard and desktop clipboard tools.
+
+        Returns True when a desktop clipboard command accepted the text.
+        """
         self.copy_to_clipboard(text)
-        copy_with_command(text)
+        return await asyncio.to_thread(copy_with_command, text)

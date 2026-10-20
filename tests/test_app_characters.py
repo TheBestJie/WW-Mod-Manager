@@ -77,3 +77,45 @@ async def test_c_in_filter_does_not_copy(app, monkeypatch):
         await pilot.pause()
         assert app.screen.query_one("#char-filter", Input).value == "c"
         assert app.clipboard == ""
+
+
+async def test_c_still_copies_when_desktop_tool_missing(app, monkeypatch):
+    monkeypatch.setattr("wwmm.app.copy_with_command", lambda text: False)
+    notifications = []
+    monkeypatch.setattr(
+        app,
+        "notify",
+        lambda message, **kwargs: notifications.append((message, kwargs)),
+    )
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(CharactersScreen("热熔"))
+        await pilot.pause()
+        list_view = app.screen.query_one("#characters", ListView)
+        list_view.index = 1
+        await pilot.press("c")
+        await pilot.pause()
+        path = str(app.snapshot.find("denia").path.absolute())
+        assert app.clipboard == path
+        assert notifications[-1][0].startswith(path)
+        assert "终端 OSC 52" in notifications[-1][0]
+        assert notifications[-1][1]["severity"] == "warning"
+        assert notifications[-1][1]["markup"] is False
+
+
+async def test_c_notification_keeps_path_literal(app, monkeypatch):
+    monkeypatch.setattr("wwmm.app.copy_with_command", lambda text: True)
+    notifications = []
+    monkeypatch.setattr(
+        app,
+        "notify",
+        lambda message, **kwargs: notifications.append((message, kwargs)),
+    )
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(CharactersScreen("热熔"))
+        await pilot.pause()
+        list_view = app.screen.query_one("#characters", ListView)
+        list_view.index = 1
+        await pilot.press("c")
+        await pilot.pause()
+        assert notifications[-1][0] == str(app.snapshot.find("denia").path.absolute())
+        assert notifications[-1][1]["markup"] is False
