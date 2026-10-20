@@ -17,6 +17,7 @@ from wwmm.search import filter_characters
 class CharactersScreen(Screen):
     BINDINGS: ClassVar[list[Binding]] = [
         Binding("slash", "focus_filter", "过滤"),
+        Binding("c", "copy_path", "复制路径"),
         Binding("h", "toggle_empty", "隐藏空角色"),
         Binding("escape", "app.pop_screen", "返回"),
     ]
@@ -99,6 +100,17 @@ class CharactersScreen(Screen):
 
     def action_focus_filter(self) -> None:
         self.query_one("#char-filter", Input).focus()
+
+    def action_copy_path(self) -> None:
+        if not self._visible:
+            return
+        list_view = self.query_one("#characters", ListView)
+        index = list_view.index or 0
+        if index >= len(self._visible):
+            index = 0
+        entry = self._visible[index]
+        self.app.copy_text(str(entry.path))
+        self.notify(str(entry.path), title="已复制角色路径")
 
     def action_toggle_empty(self) -> None:
         self.hide_empty = not self.hide_empty

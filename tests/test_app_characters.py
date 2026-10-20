@@ -1,4 +1,4 @@
-from textual.widgets import ListView
+from textual.widgets import Input, ListView
 
 from wwmm.screens.characters import CharactersScreen
 from wwmm.screens.home import HomeScreen
@@ -53,3 +53,27 @@ async def test_escape_returns_home(app):
         await pilot.press("escape")
         await pilot.pause()
         assert isinstance(app.screen, HomeScreen)
+
+
+async def test_c_copies_character_path(app, monkeypatch):
+    monkeypatch.setattr("wwmm.app.copy_with_command", lambda text: True)
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(CharactersScreen("热熔"))
+        await pilot.pause()
+        list_view = app.screen.query_one("#characters", ListView)
+        list_view.index = 1
+        await pilot.press("c")
+        await pilot.pause()
+        assert app.clipboard == str(app.snapshot.find("denia").path)
+
+
+async def test_c_in_filter_does_not_copy(app, monkeypatch):
+    monkeypatch.setattr("wwmm.app.copy_with_command", lambda text: True)
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(CharactersScreen("热熔"))
+        await pilot.pause()
+        await pilot.press("slash")
+        await pilot.press("c")
+        await pilot.pause()
+        assert app.screen.query_one("#char-filter", Input).value == "c"
+        assert app.clipboard == ""

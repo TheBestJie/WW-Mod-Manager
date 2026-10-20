@@ -7,6 +7,7 @@ from pathlib import Path
 
 from textual.app import App
 
+from wwmm.clipboard import copy_with_command
 from wwmm.config import Config, ConfigStore
 from wwmm.errors import LayoutError
 from wwmm.models import Mod, Snapshot
@@ -107,3 +108,8 @@ class WWMMApp(App):
         self.created_dirs = []
         self._ensure_character_dirs()
         return self.reload_snapshot()
+
+    def copy_text(self, text: str) -> None:
+        """Copy text to the terminal clipboard and desktop clipboard tools."""
+        self.copy_to_clipboard(text)
+        copy_with_command(text)

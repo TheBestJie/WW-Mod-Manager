@@ -24,6 +24,7 @@ class ModsScreen(Screen):
         Binding("space", "toggle", "开关"),
         Binding("m", "show_hotkeys", "快捷键"),
         Binding("slash", "focus_filter", "过滤"),
+        Binding("c", "copy_path", "复制路径"),
         Binding("r", "refresh", "刷新"),
         Binding("escape", "app.pop_screen", "返回"),
     ]
@@ -137,7 +138,7 @@ class ModsScreen(Screen):
             f"路径：{escape(str(mod.path))}\n"
             f"ini 文件：{mod.ini_count}\n"
             f"状态：{status}\n"
-            "快捷键：按 m 查看"
+            "快捷操作：m 查看快捷键 · c 复制路径"
         )
 
     def _selected_mod(self) -> Mod | None:
@@ -148,6 +149,13 @@ class ModsScreen(Screen):
         if index >= len(self._visible):
             index = 0
         return self._visible[index]
+
+    def action_copy_path(self) -> None:
+        mod = self._selected_mod()
+        if mod is None:
+            return
+        self.app.copy_text(str(mod.path))
+        self.notify(str(mod.path), title="已复制 mod 路径")
 
     def action_toggle(self) -> None:
         mod = self._selected_mod()

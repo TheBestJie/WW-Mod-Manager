@@ -59,3 +59,33 @@ async def test_back_rescans_parent_counts(app, mods_tree):
         await pilot.pause()
         assert isinstance(app.screen, CharactersScreen)
         assert app.snapshot.find("denia").enabled_count == 0
+
+
+async def test_c_copies_selected_mod_path(app, monkeypatch):
+    monkeypatch.setattr("wwmm.app.copy_with_command", lambda text: True)
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(ModsScreen("denia"))
+        await pilot.pause()
+        screen = app.screen
+        mod = screen.visible_mods[0]
+        await pilot.press("c")
+        await pilot.pause()
+        assert app.clipboard == str(mod.path)
+        assert "达妮娅-红绳捆绑" in app.clipboard
+
+
+async def test_c_copies_disabled_mod_path(app, monkeypatch):
+    monkeypatch.setattr("wwmm.app.copy_with_command", lambda text: True)
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(ModsScreen("aemeath"))
+        await pilot.pause()
+        screen = app.screen
+        list_view = screen.query_one("#mods", ListView)
+        index = next(
+            position for position, mod in enumerate(screen.visible_mods) if not mod.enabled
+        )
+        list_view.index = index
+        await pilot.press("c")
+        await pilot.pause()
+        assert app.clipboard == str(screen.visible_mods[index].path)
+        assert "DISABLED_" in app.clipboard
