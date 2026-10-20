@@ -12,7 +12,9 @@ from textual.screen import Screen
 from textual.widgets import Footer, Input, ListItem, ListView, Static
 
 from wwmm.errors import ToggleError
+from wwmm.hotkeys import parse_mod_hotkeys
 from wwmm.models import CharacterEntry, Mod
+from wwmm.screens.hotkeys import HotkeysScreen
 from wwmm.search import filter_mods
 from wwmm.toggle import toggle_mod
 
@@ -20,6 +22,7 @@ from wwmm.toggle import toggle_mod
 class ModsScreen(Screen):
     BINDINGS: ClassVar[list[Binding]] = [
         Binding("space", "toggle", "开关"),
+        Binding("m", "show_hotkeys", "快捷键"),
         Binding("slash", "focus_filter", "过滤"),
         Binding("r", "refresh", "刷新"),
         Binding("escape", "app.pop_screen", "返回"),
@@ -125,17 +128,23 @@ class ModsScreen(Screen):
             f"文件夹：{escape(mod.folder_name)}\n"
             f"路径：{escape(str(mod.path))}\n"
             f"ini 文件：{mod.ini_count}\n"
-            f"状态：{status}"
+            f"状态：{status}\n"
+            "快捷键：按 m 查看"
         )
 
-    def action_toggle(self) -> None:
+    def _selected_mod(self) -> Mod | None:
         if not self._visible:
-            return
+            return None
         list_view = self.query_one("#mods", ListView)
         index = list_view.index or 0
         if index >= len(self._visible):
             index = 0
-        mod = self._visible[index]
+        return self._visible[index]
+
+    def action_toggle(self) -> None:
+        mod = self._selected_mod()
+        if mod is None:
+            return
         try:
             new_mod = toggle_mod(mod)
         except ToggleError as exc:
@@ -148,6 +157,12 @@ class ModsScreen(Screen):
         self.refresh_view(keep_base=new_mod.base_name)
         verb = "启用" if new_mod.enabled else "禁用"
         self.notify(f"已{verb} {new_mod.base_name} · 回游戏按 F10")
+
+    def action_show_hotkeys(self) -> None:
+        mod = self._selected_mod()
+        if mod is None:
+            return
+        self.app.push_screen(HotkeysScreen(mod, parse_mod_hotkeys(mod.path)))
 
     def action_focus_filter(self) -> None:
         self.query_one("#mod-filter", Input).focus()

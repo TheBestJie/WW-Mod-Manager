@@ -2,11 +2,12 @@ import io
 
 from rich.console import Console
 from textual.containers import VerticalScroll
-from textual.widgets import Static
+from textual.widgets import Input, Static
 
 from wwmm.hotkeys import Hotkey, HotkeyKind
 from wwmm.models import Mod
 from wwmm.screens.hotkeys import HotkeysScreen
+from wwmm.screens.mods import ModsScreen
 
 
 def _mod(tmp_path, *, enabled: bool = True) -> Mod:
@@ -84,3 +85,65 @@ async def test_m_closes_modal(app, tmp_path):
         await pilot.press("m")
         await pilot.pause()
         assert not isinstance(app.screen, HotkeysScreen)
+
+
+def _write_hotkeys(path):
+    path.write_text("[KeyHair]\nkey = CTRL 0\ntype = cycle\n", encoding="utf-8")
+
+
+async def test_m_opens_hotkeys_for_selected_mod(app, mods_tree):
+    _write_hotkeys(mods_tree / "character" / "denia" / "达妮娅-红绳捆绑" / "mod.ini")
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(ModsScreen("denia"))
+        await pilot.pause()
+        await pilot.press("m")
+        await pilot.pause()
+        screen = app.screen
+        assert isinstance(screen, HotkeysScreen)
+        assert [(h.section, h.display_key) for h in screen.hotkeys] == [("KeyHair", "Ctrl+0")]
+        assert "切换 · 1 项" in str(screen.query_one("#hotkey-group-switch", Static).content)
+
+
+async def test_m_warns_for_disabled_mod(app, mods_tree):
+    _write_hotkeys(mods_tree / "character" / "denia" / "达妮娅-红绳捆绑" / "mod.ini")
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(ModsScreen("denia"))
+        await pilot.pause()
+        await pilot.press("space")
+        await pilot.pause()
+        await pilot.press("m")
+        await pilot.pause()
+        assert isinstance(app.screen, HotkeysScreen)
+        assert "不会生效" in str(app.screen.query_one("#hotkey-warning", Static).content)
+
+
+async def test_m_shows_empty_state_without_keys(app):
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(ModsScreen("denia"))
+        await pilot.pause()
+        await pilot.press("m")
+        await pilot.pause()
+        assert "没有声明" in str(app.screen.query_one("#hotkey-empty", Static).content)
+
+
+async def test_escape_returns_to_mod_list(app):
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(ModsScreen("denia"))
+        await pilot.pause()
+        await pilot.press("m")
+        await pilot.pause()
+        await pilot.press("escape")
+        await pilot.pause()
+        assert isinstance(app.screen, ModsScreen)
+
+
+async def test_m_does_not_hijack_filter_input(app):
+    async with app.run_test(size=(100, 30)) as pilot:
+        app.push_screen(ModsScreen("denia"))
+        await pilot.pause()
+        await pilot.press("slash")
+        await pilot.pause()
+        await pilot.press("m")
+        await pilot.pause()
+        assert isinstance(app.screen, ModsScreen)
+        assert app.screen.query_one("#mod-filter", Input).value == "m"
