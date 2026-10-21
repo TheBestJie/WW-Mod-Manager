@@ -14,12 +14,24 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Static
 
 from wwmm import __version__
-from wwmm.self_update import SelfUpdateResult, UpdateCheck, find_repo_root
+from wwmm.errors import SelfUpdateError
+from wwmm.self_update import (
+    SelfUpdateResult,
+    UpdateCheck,
+    find_repo_root,
+    is_git_checkout,
+)
 
 log = logging.getLogger(__name__)
 
 CHECKING_MESSAGE = "正在检查 GitHub release…"
 UPDATING_MESSAGE = "正在更新，请稍候…"
+UPDATE_PLAN_GIT = "更新将执行 git pull --ff-only 与 uv 重装，完成后需重启 wwmm。"
+UPDATE_PLAN_ARCHIVE = (
+    "更新将下载该 release 的源码包，覆盖当前安装目录（先备份旧文件）"
+    "并执行 uv 重装，完成后需重启 wwmm。"
+)
+UPDATE_PLAN_UNKNOWN = "更新将把当前安装同步到最新 release 并重装，完成后需重启 wwmm。"
 
 
 class SelfUpdateScreen(ModalScreen[None]):
@@ -88,12 +100,19 @@ class SelfUpdateScreen(ModalScreen[None]):
         if not self.is_attached:
             return
         self._set_message(
-            f"当前 v{check.current} → 最新 v{check.latest.version}\n"
-            "更新将执行 git pull --ff-only 与 uv 重装，完成后需重启 wwmm。"
+            f"当前 v{check.current} → 最新 v{check.latest.version}\n{self._update_plan()}"
         )
         confirm = self.query_one("#self-update-confirm", Button)
         confirm.disabled = False
         confirm.focus()
+
+    def _update_plan(self) -> str:
+        """Name the mechanism this particular install will actually use."""
+        try:
+            root = find_repo_root()
+        except SelfUpdateError:
+            return UPDATE_PLAN_UNKNOWN
+        return UPDATE_PLAN_GIT if is_git_checkout(root) else UPDATE_PLAN_ARCHIVE
 
     def _on_check_error(self, message: str) -> None:
         self._show_error(f"检查更新失败：{message}", title="检查更新失败")
@@ -118,7 +137,12 @@ class SelfUpdateScreen(ModalScreen[None]):
     def _on_updated(self, result: SelfUpdateResult) -> None:
         if not self.is_attached:
             return
-        self.notify(f"已更新到 v{result.new_version}，重启 wwmm 后生效")
+        message = f"已更新到 v{result.new_version}，重启 wwmm 后生效"
+        if result.backup:
+            # A release install overwrites files in place; say where the old
+            # tree went so the user can roll back without guessing.
+            message += f"（旧文件备份：{result.backup}）"
+        self.notify(message)
         self.dismiss(None)
 
     def _on_update_error(self, message: str) -> None:

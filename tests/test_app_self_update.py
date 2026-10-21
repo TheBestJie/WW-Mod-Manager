@@ -350,3 +350,45 @@ def test_conftest_default_checker_is_offline(request, monkeypatch, fixture_name)
 
     assert fixture_app.release_checker is not check_for_update
     assert fixture_app.release_checker() is None
+
+
+async def test_check_newer_explains_archive_install(app, monkeypatch, tmp_path):
+    """A Releases install has no .git, so the dialog must not promise a git pull."""
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "ww-mod-manager"\nversion = "1.3.0"\n', encoding="utf-8"
+    )
+    monkeypatch.setattr("wwmm.screens.self_update.find_repo_root", lambda: tmp_path)
+    monkeypatch.setattr(app, "release_checker", lambda **kwargs: _newer_check())
+
+    async with app.run_test(size=(100, 30)) as pilot:
+        await _open(pilot)
+        assert await _wait_for(pilot, lambda: "1.4.0" in _message(app))
+
+        message = _message(app)
+        assert "源码包" in message
+        assert "git pull" not in message
+
+
+async def test_updated_reports_the_backup_path(app, monkeypatch):
+    monkeypatch.setattr(app, "release_checker", lambda **kwargs: _newer_check())
+    monkeypatch.setattr(
+        app,
+        "self_updater",
+        lambda root: SelfUpdateResult(
+            new_version="1.4.0",
+            reinstalled=True,
+            mode="archive",
+            backup="/tmp/WW-Mod-Manager.bak-v1.3.0-20261022-073000",
+        ),
+    )
+    notifications = _capture_notifications(monkeypatch, app)
+
+    async with app.run_test(size=(100, 30)) as pilot:
+        await _open(pilot)
+        assert await _wait_for(pilot, lambda: _confirm(app).disabled is False)
+        await pilot.click("#self-update-confirm")
+        assert await _wait_for(pilot, lambda: bool(notifications))
+
+    message = notifications[-1][0]
+    assert "备份" in message
+    assert "/tmp/WW-Mod-Manager.bak-v1.3.0-20261022-073000" in message

@@ -208,11 +208,26 @@ wwmm update --no-create         # 只更新角色表，不补角色目录
 随时按 `Ctrl+U` 手动检查，弹屏会给出结果：
 
 - 已是最新：显示当前版本号，无需操作；
-- 有新版本：给出版本对比，点「更新」执行 `git pull --ff-only`；检测到 `uv` 时再执行
-  `uv tool install --editable --force <仓库路径>`，完成后需重启 `wwmm` 生效；
-- 检查或更新失败：弹屏显示中文错误，并指明失败在哪一步（检查 / `git pull` / uv 重装）；
-  自更新只对 git clone + `install.sh` 的 editable 安装生效，找不到仓库根目录时给出手动更新
-  地址，不会执行任何 git 命令。
+- 有新版本：给出版本对比，点「更新」后按当前安装方式自动选择路径，完成后需重启 `wwmm`：
+  - `git clone` + `install.sh` 的 editable 安装：执行 `git pull --ff-only`，再执行
+    `uv tool install --editable --force <仓库路径>`；
+  - 从 Releases 下载源码包解压后 `install.sh` 的安装（目录里没有 `.git`）：下载该 tag 的源码包，
+    校验路径后解压，把新源码覆盖到安装目录（先整体备份为
+    `<安装目录>.bak-v<旧版本>-<时间戳>`，`.git`、`.venv`、`data/` 等本地条目永不覆盖），
+    再执行同一条 `uv tool install --editable --force <安装目录>`；成功通知里会给出备份路径，
+    回滚时把备份目录换回去即可；
+- 检查或更新失败：弹屏显示中文错误，并指明失败在哪一步（检查 / 下载源码包 / 解压 / 覆盖 /
+  `git pull` / uv 重装），不会执行任何破坏性操作；
+- 两种模式都需要能找到源码目录（含 `project.name = "ww-mod-manager"` 的 `pyproject.toml`）。
+  找不到时给出手动更新地址，不做任何改动。
+
+> **v1.3.1 及更早版本的 Releases 安装**：那些版本的判断逻辑只认 `.git`，点「更新」仍会提示
+> 「未找到可自动更新的 git 仓库」。手动更新一次到 v1.3.2 后，界面里的「更新」就能直接用了：
+>
+> ```bash
+> git clone --depth 1 --branch v1.3.2 https://github.com/TheBestJie/WW-Mod-Manager
+> cd WW-Mod-Manager && ./install.sh
+> ```
 
 ### 关于 `Ctrl+U`
 
@@ -273,13 +288,17 @@ wwmm update --no-create         # 只更新角色表，不补角色目录
 断言和 `uv.lock` 的包版本会跟着变，跑一次 `uv sync` 加 `pytest` 就知道有没有漏）：
 
 ```bash
-git tag v1.3.1
+git tag v1.3.2
 git push origin main --tags
 ```
 
 `.github/workflows/release.yml` 会在 `v*` tag 推送时用 `gh release create` 建同名 release
 （`--generate-notes` 自动生成 release notes）。启动检查读的就是这个 release，**没有
 release 时自更新功能等于不存在**，所以发版必须打 tag。
+
+Releases 安装的自动更新直接下载 GitHub 为 tag 生成的源码归档
+`https://github.com/TheBestJie/WW-Mod-Manager/archive/refs/tags/<tag>.tar.gz`，
+所以 tag 一旦发布就不要删除或改写——删了旧版本用户的界面更新会找不到源码包。
 
 workflow 在发布前会核对 `v$GITHUB_REF_NAME` 与 `pyproject.toml` 的 `project.version`：
 不一致就直接失败。这一步防的是「tag 打了 v1.4.0 但版本号还停在 1.3.0」——那样更新完成后
