@@ -4,6 +4,7 @@ from textual.widgets.option_list import Option
 
 from wwmm.hotkeys import Hotkey, HotkeyKind
 from wwmm.models import Mod
+from wwmm.screens.hotkey_edit import HotkeyEditScreen
 from wwmm.screens.hotkeys import HotkeysScreen
 from wwmm.screens.mods import ModsScreen
 
@@ -153,9 +154,10 @@ async def test_r_opens_edit_for_highlighted_hotkey(app, tmp_path, monkeypatch):
         await pilot.press("r")
         await pilot.pause()
 
-        # 编辑屏在任务 3 接入，本任务只验证 R 命中了当前高亮行。
+        # 编辑屏在任务 3 接入：R 命中当前高亮行并打开编辑屏。
         assert [hotkey.display_key for hotkey in resolved if hotkey is not None] == ["Ctrl+0"]
-        assert isinstance(app.screen, HotkeysScreen)
+        assert isinstance(app.screen, HotkeyEditScreen)
+        assert app.screen.query_one("#hotkey-edit-box")
 
 
 async def test_r_noop_when_no_hotkeys(app, tmp_path):

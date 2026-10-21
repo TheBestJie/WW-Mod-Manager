@@ -13,8 +13,11 @@ from textual.screen import ModalScreen
 from textual.widgets import OptionList, Static
 from textual.widgets.option_list import Option
 
-from wwmm.hotkeys import Hotkey, HotkeyKind
+from wwmm.errors import HotkeyEditError
+from wwmm.hotkey_edit import apply_hotkey
+from wwmm.hotkeys import Hotkey, HotkeyKind, format_key, parse_mod_hotkeys
 from wwmm.models import Mod
+from wwmm.screens.hotkey_edit import HotkeyEditScreen
 
 # Width of the key column in a row prompt, in terminal cells.
 _KEY_WIDTH = 14
@@ -74,12 +77,46 @@ class HotkeysScreen(ModalScreen[None]):
         hotkey = self._highlighted_hotkey()
         if hotkey is None:
             return
-        # 任务 3 在这里 push HotkeyEditScreen(self.mod, hotkey) 并写回 ini。
+        self.app.push_screen(HotkeyEditScreen(self.mod, hotkey), callback=self._on_edit)
+
+    def _on_edit(self, new_raw: str | None) -> None:
+        """Write the edited key back to the ini and refresh the list in place."""
+        hotkey = self._highlighted_hotkey()
+        if new_raw is None or hotkey is None:
+            return
+        try:
+            apply_hotkey(
+                self.mod.path,
+                hotkey.source,
+                hotkey.section,
+                hotkey.field,
+                hotkey.occurrence,
+                new_raw,
+            )
+        except HotkeyEditError as exc:
+            self.notify(str(exc), title="修改失败", severity="error")
+            return
+        self.hotkeys = parse_mod_hotkeys(self.mod.path)
+        self._reload_options()
+        self.notify(f"已修改 {hotkey.section}：{hotkey.display_key} → {format_key(new_raw)}")
 
     def action_close(self) -> None:
         self.dismiss(None)
 
     def _build_option_list(self) -> OptionList:
+        return OptionList(*self._options(), id="hotkeys", markup=False)
+
+    def _reload_options(self) -> None:
+        """Rebuild the option list in place, keeping the highlight where it was."""
+        option_list = self.query_one("#hotkeys", OptionList)
+        highlighted = option_list.highlighted
+        option_list.clear_options()
+        option_list.add_options(self._options())
+        if highlighted is not None and option_list.option_count:
+            option_list.highlighted = min(highlighted, option_list.option_count - 1)
+        self.query_one("#hotkeys-header", Static).update(self._header())
+
+    def _options(self) -> list[Option | None]:
         options: list[Option | None] = []
         self._option_hotkeys = []
         groups = self.grouped
@@ -100,7 +137,7 @@ class HotkeysScreen(ModalScreen[None]):
             if position < len(groups) - 1:
                 # A ``None`` option only draws a rule under the previous option.
                 options.append(None)
-        return OptionList(*options, id="hotkeys", markup=False)
+        return options
 
     def _row(self, hotkey: Hotkey) -> Text:
         key = hotkey.display_key
