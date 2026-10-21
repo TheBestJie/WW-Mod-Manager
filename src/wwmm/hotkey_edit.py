@@ -32,6 +32,12 @@ def _valid_token(token: str) -> bool:
     return name.upper() in _VK_LABELS or token.upper() == "NO_MODIFIERS"
 
 
+def _key_label(token: str) -> str:
+    """Map a token to the label used for the ``no_`` exclusion collision check."""
+    name = token[3:] if token.casefold().startswith("no_") else token
+    return _VK_LABELS.get(name.upper(), name.upper())
+
+
 def validate_key_expr(text: str) -> str:
     """Return *text* as a normalized key expression or raise :class:`HotkeyEditError`."""
     tokens = _TOKEN_SPLIT_RE.split(text.strip())
@@ -40,6 +46,13 @@ def validate_key_expr(text: str) -> str:
     bad = [token for token in tokens if not _valid_token(token)]
     if bad:
         raise HotkeyEditError(_USAGE_HINT.format("、".join(bad)))
+    # A ``no_*`` token only excludes a key; if every real key is excluded (or none
+    # is left) the expression parses to an empty binding and the ini would end up
+    # with a line that the hotkey list silently drops.
+    excluded = {_key_label(token) for token in tokens if token.casefold().startswith("no_")}
+    real = {_key_label(token) for token in tokens if not token.casefold().startswith("no_")}
+    if not real - excluded:
+        raise HotkeyEditError("至少需要一个按键，不能只写排除项")
     return " ".join(tokens)
 
 

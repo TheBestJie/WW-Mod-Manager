@@ -93,7 +93,7 @@ class HotkeysScreen(ModalScreen[None]):
                 hotkey.occurrence,
                 new_raw,
             )
-        except HotkeyEditError as exc:
+        except (HotkeyEditError, OSError) as exc:
             self.notify(str(exc), title="修改失败", severity="error")
             return
         self.hotkeys = parse_mod_hotkeys(self.mod.path)

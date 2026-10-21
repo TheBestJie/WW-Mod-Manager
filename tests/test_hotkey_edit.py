@@ -20,6 +20,16 @@ def test_validate_accepts_supported_syntax():
     assert validate_key_expr("no_modifiers /") == "no_modifiers /"
 
 
+def test_validate_rejects_expressions_without_real_keys():
+    for bad in ("no_ctrl", "no_modifiers", "ctrl no_ctrl"):
+        with pytest.raises(HotkeyEditError, match="排除项"):
+            validate_key_expr(bad)
+    assert validate_key_expr("ctrl no_modifiers /") == "ctrl no_modifiers /"
+    assert validate_key_expr("ctrl alt f7") == "ctrl alt f7"
+    assert validate_key_expr("0x70") == "0x70"
+    assert validate_key_expr("XB_X") == "XB_X"
+
+
 def test_validate_rejects_unsupported():
     for bad in ("", "   ", "ctrl 中文", "foo", "ctrl +"):
         with pytest.raises(HotkeyEditError):

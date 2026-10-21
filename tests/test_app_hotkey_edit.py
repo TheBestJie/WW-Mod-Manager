@@ -9,6 +9,11 @@ from wwmm.screens.mods import ModsScreen
 
 INI = "[KeyHair]\nkey = CTRL 0\ntype = cycle\n"
 TWO_KEYS_INI = "[KeyHair]\nkey = CTRL 0\nkey = CTRL 1\ntype = cycle\n"
+TWO_GROUPS_INI = (
+    "[KeyHair]\nkey = CTRL 0\ntype = cycle\n"
+    "\n"
+    "[KeyHold]\nkey = CTRL 1\ntype = hold\n"
+)
 
 
 def _mod_ini(mods_tree):
@@ -156,3 +161,69 @@ async def test_edit_write_failure_notifies(app, mods_tree, monkeypatch):
         assert kwargs["severity"] == "error"
         assert [hotkey.display_key for hotkey in screen.hotkeys] == ["Ctrl+0"]
         assert ini.read_text(encoding="utf-8") == INI
+
+
+async def test_edit_oserror_notifies_without_crashing(app, mods_tree, monkeypatch):
+    ini = _write(_mod_ini(mods_tree))
+    notifications = []
+    monkeypatch.setattr(
+        app,
+        "notify",
+        lambda message, **kwargs: notifications.append((message, kwargs)),
+    )
+
+    def boom(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr("wwmm.screens.hotkeys.apply_hotkey", boom)
+
+    async with app.run_test(size=(100, 30)) as pilot:
+        screen, _ = await _open_editor(app, pilot)
+        editor = app.screen
+        editor.query_one("#hotkey-edit-input", Input).value = "ctrl k"
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        assert not isinstance(app.screen, HotkeyEditScreen)
+        assert isinstance(app.screen, HotkeysScreen)
+        assert notifications
+        message, kwargs = notifications[-1]
+        assert message == "disk full"
+        assert kwargs["title"] == "修改失败"
+        assert kwargs["severity"] == "error"
+        assert [hotkey.display_key for hotkey in screen.hotkeys] == ["Ctrl+0"]
+        assert ini.read_text(encoding="utf-8") == INI
+
+        # The app survived: the screen still responds to its own bindings.
+        await pilot.press("escape")
+        await pilot.pause()
+        assert isinstance(app.screen, ModsScreen)
+
+
+async def test_reload_keeps_option_hotkeys_aligned_across_groups(app, mods_tree):
+    _write(_mod_ini(mods_tree), TWO_GROUPS_INI)
+    async with app.run_test(size=(100, 30)) as pilot:
+        screen = await _open_hotkeys(app, pilot)
+        option_list = screen.query_one("#hotkeys", OptionList)
+        option_list.highlighted = 1
+        await pilot.pause()
+        await pilot.press("r")
+        await pilot.pause()
+        editor = app.screen
+        assert isinstance(editor, HotkeyEditScreen)
+        editor.query_one("#hotkey-edit-input", Input).value = "ctrl k"
+        await pilot.pause()
+        await pilot.press("enter")
+        await pilot.pause()
+
+        option_list = screen.query_one("#hotkeys", OptionList)
+        assert option_list.option_count == len(screen._option_hotkeys)
+        headers = [
+            index for index, hotkey in enumerate(screen._option_hotkeys) if hotkey is None
+        ]
+        assert headers == [0, 2]
+        assert [hotkey.display_key for hotkey in screen.hotkeys] == ["Ctrl+K", "Ctrl+1"]
+        assert [
+            hotkey.display_key for hotkey in screen._option_hotkeys if hotkey is not None
+        ] == ["Ctrl+K", "Ctrl+1"]
