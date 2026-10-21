@@ -211,6 +211,29 @@ def test_perform_self_update_raises_on_git_failure(tmp_path, monkeypatch):
     assert "冲突" in str(excinfo.value)
 
 
+def test_perform_self_update_reports_install_failure(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    _write_pyproject(root, version="1.4.0")
+    _uv_present(monkeypatch)
+    returncodes = iter([0, 1])
+    calls = []
+
+    def runner(command, **kwargs):
+        calls.append(command)
+        return _FakeCompleted(returncode=next(returncodes), stderr="error: 安装失败（依赖冲突）")
+
+    with pytest.raises(SelfUpdateError) as excinfo:
+        perform_self_update(root, runner=runner)
+
+    message = str(excinfo.value)
+    assert calls[0][:3] == ["git", "-C", str(root)]
+    assert len(calls) == 2
+    assert "代码已更新" in message
+    assert f"uv tool install -e {root}" in message
+    assert "依赖冲突" in message
+    assert "更新失败" not in message
+
+
 def test_perform_self_update_without_uv(tmp_path, monkeypatch):
     root = tmp_path / "repo"
     _write_pyproject(root, version="1.4.0")

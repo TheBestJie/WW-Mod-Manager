@@ -170,9 +170,12 @@ def perform_self_update(repo_root: Path, runner=subprocess.run) -> SelfUpdateRes
         if installed.returncode == 0:
             reinstalled = True
         else:
-            log.warning(
-                "uv tool install 失败，保留现有安装：%s",
-                _summarize(installed.stdout, installed.stderr),
+            # The pull already succeeded, so the wording must not claim the update
+            # failed as a whole: only the reinstall did.
+            raise SelfUpdateError(
+                "代码已更新，但重装失败，请手动运行 "
+                f"uv tool install -e {repo_root}："
+                f"{_summarize(installed.stdout, installed.stderr)}"
             )
     else:
         log.info("未找到 uv，跳过重新安装，使用已安装的入口")
