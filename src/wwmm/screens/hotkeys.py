@@ -26,6 +26,8 @@ _KEY_WIDTH = 14
 class HotkeysScreen(ModalScreen[None]):
     BINDINGS: ClassVar[list[Binding]] = [
         Binding("r", "edit_selected", "修改"),
+        # Shift+R arrives as "R"; alias it so the key the hint advertises works.
+        Binding("R", "edit_selected", "修改", show=False),
         Binding("m", "close", "关闭"),
         Binding("escape", "close", "关闭"),
     ]

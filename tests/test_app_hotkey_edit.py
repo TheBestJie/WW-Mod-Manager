@@ -39,6 +39,19 @@ async def _open_editor(app, pilot):
     return screen, editor
 
 
+async def test_shift_r_also_opens_editor(app, mods_tree):
+    """Shift+R reports ``"R"`` as the key; the modal must treat it like ``r``."""
+    _write(_mod_ini(mods_tree))
+    async with app.run_test(size=(100, 30)) as pilot:
+        await _open_hotkeys(app, pilot)
+        await pilot.press("R")
+        await pilot.pause()
+        assert isinstance(app.screen, HotkeyEditScreen)
+        # The extra binding stays out of the Footer: one visible "修改" is enough.
+        visible = [binding for binding in HotkeysScreen.BINDINGS if binding.show]
+        assert [binding.key for binding in visible] == ["r", "m", "escape"]
+
+
 async def test_edit_flow_rewrites_ini(app, mods_tree):
     ini = _write(_mod_ini(mods_tree))
     async with app.run_test(size=(100, 30)) as pilot:
