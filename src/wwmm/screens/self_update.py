@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import ClassVar
 
 from rich.markup import escape
@@ -14,6 +15,8 @@ from textual.widgets import Button, Static
 
 from wwmm import __version__
 from wwmm.self_update import SelfUpdateResult, UpdateCheck, find_repo_root
+
+log = logging.getLogger(__name__)
 
 CHECKING_MESSAGE = "正在检查 GitHub release…"
 UPDATING_MESSAGE = "正在更新，请稍候…"
@@ -56,7 +59,8 @@ class SelfUpdateScreen(ModalScreen[None]):
         """Hop back to the UI thread, tolerating an app that already quit."""
         try:
             self.app.call_from_thread(callback, *args)
-        except Exception:  # noqa: BLE001 - a UI callback must never kill the worker
+        except Exception:  # a UI callback must never kill the worker
+            log.debug("UI callback failed", exc_info=True)
             return
 
     @work(thread=True, exclusive=True)

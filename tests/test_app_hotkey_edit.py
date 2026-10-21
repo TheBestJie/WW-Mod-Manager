@@ -9,11 +9,7 @@ from wwmm.screens.mods import ModsScreen
 
 INI = "[KeyHair]\nkey = CTRL 0\ntype = cycle\n"
 TWO_KEYS_INI = "[KeyHair]\nkey = CTRL 0\nkey = CTRL 1\ntype = cycle\n"
-TWO_GROUPS_INI = (
-    "[KeyHair]\nkey = CTRL 0\ntype = cycle\n"
-    "\n"
-    "[KeyHold]\nkey = CTRL 1\ntype = hold\n"
-)
+TWO_GROUPS_INI = "[KeyHair]\nkey = CTRL 0\ntype = cycle\n\n[KeyHold]\nkey = CTRL 1\ntype = hold\n"
 
 
 def _mod_ini(mods_tree):
@@ -219,11 +215,10 @@ async def test_reload_keeps_option_hotkeys_aligned_across_groups(app, mods_tree)
 
         option_list = screen.query_one("#hotkeys", OptionList)
         assert option_list.option_count == len(screen._option_hotkeys)
-        headers = [
-            index for index, hotkey in enumerate(screen._option_hotkeys) if hotkey is None
-        ]
+        headers = [index for index, hotkey in enumerate(screen._option_hotkeys) if hotkey is None]
         assert headers == [0, 2]
         assert [hotkey.display_key for hotkey in screen.hotkeys] == ["Ctrl+K", "Ctrl+1"]
-        assert [
-            hotkey.display_key for hotkey in screen._option_hotkeys if hotkey is not None
-        ] == ["Ctrl+K", "Ctrl+1"]
+        assert [hotkey.display_key for hotkey in screen._option_hotkeys if hotkey is not None] == [
+            "Ctrl+K",
+            "Ctrl+1",
+        ]

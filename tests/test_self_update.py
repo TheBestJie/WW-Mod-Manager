@@ -240,7 +240,7 @@ def test_perform_self_update_reports_pull_timeout(tmp_path, monkeypatch):
     _uv_present(monkeypatch)
 
     def runner(command, **kwargs):
-        raise subprocess.TimeoutExpired(command, 60)
+        raise subprocess.TimeoutExpired(command, 60, output="fatal: unable to access")
 
     with pytest.raises(SelfUpdateError) as excinfo:
         perform_self_update(root, runner=runner)
@@ -248,6 +248,7 @@ def test_perform_self_update_reports_pull_timeout(tmp_path, monkeypatch):
     message = str(excinfo.value)
     assert "更新超时" in message
     assert "改用 git pull" in message
+    assert "fatal: unable to access" in message
     assert "代码已更新" not in message
 
 
@@ -261,7 +262,9 @@ def test_perform_self_update_reports_install_timeout(tmp_path, monkeypatch):
         calls.append(command)
         if len(calls) == 1:
             return _FakeCompleted()
-        raise subprocess.TimeoutExpired(command, 60)
+        raise subprocess.TimeoutExpired(
+            command, 60, output=b"error: failed to build \xe4\xbe\x9d\xe8\xb5\x96"
+        )
 
     with pytest.raises(SelfUpdateError) as excinfo:
         perform_self_update(root, runner=runner)
@@ -271,8 +274,11 @@ def test_perform_self_update_reports_install_timeout(tmp_path, monkeypatch):
     assert calls[0][:3] == ["git", "-C", str(root)]
     assert "代码已更新" in message
     assert "重装超时" in message
+    assert "60" in message
     assert f"uv tool install -e {root}" in message
+    assert "error: failed to build 依赖" in message  # TimeoutExpired.output is bytes
     assert "改用 git pull" not in message
+    assert "更新失败" not in message
 
 
 def test_perform_self_update_without_uv(tmp_path, monkeypatch):

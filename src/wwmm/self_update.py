@@ -132,12 +132,22 @@ def _read_version(repo_root: Path) -> str:
     return version
 
 
-def _summarize(stdout: str | None, stderr: str | None) -> str:
-    parts = [part.strip() for part in (stdout, stderr) if part and part.strip()]
-    detail = "\n".join(parts) or "未知错误"
+def _detail(stdout: bytes | str | None, stderr: bytes | str | None) -> str:
+    """Join whatever the subprocess left behind; TimeoutExpired hands back bytes."""
+    parts = []
+    for part in (stdout, stderr):
+        if isinstance(part, bytes):
+            part = part.decode("utf-8", errors="replace")
+        if part and part.strip():
+            parts.append(part.strip())
+    detail = "\n".join(parts)
     if len(detail) > MAX_ERROR_DETAIL:
         return f"{detail[:MAX_ERROR_DETAIL]}…"
     return detail
+
+
+def _summarize(stdout: bytes | str | None, stderr: bytes | str | None) -> str:
+    return _detail(stdout, stderr) or "未知错误"
 
 
 def _run_command(
@@ -153,7 +163,10 @@ def _run_command(
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise SelfUpdateError(timeout_message) from exc
+        # Keep whatever the command printed before it was killed.
+        detail = _detail(exc.output, exc.stderr)
+        suffix = f"：{detail}" if detail else ""
+        raise SelfUpdateError(f"{timeout_message}{suffix}") from exc
 
 
 def perform_self_update(repo_root: Path, runner=subprocess.run) -> SelfUpdateResult:
@@ -173,7 +186,10 @@ def perform_self_update(repo_root: Path, runner=subprocess.run) -> SelfUpdateRes
         installed = _run_command(
             runner,
             install_command,
-            timeout_message=(f"代码已更新，但重装超时，请手动运行 uv tool install -e {repo_root}"),
+            timeout_message=(
+                "代码已更新，但重装超时"
+                f"（{COMMAND_TIMEOUT} 秒），请手动运行 uv tool install -e {repo_root}"
+            ),
         )
         if installed.returncode == 0:
             reinstalled = True

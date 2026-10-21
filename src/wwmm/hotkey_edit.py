@@ -116,7 +116,9 @@ def apply_hotkey(
         out.append(line)
 
     if not replaced:
-        raise HotkeyEditError(f"未找到快捷键：[{section}] {field} 第 {occurrence + 1} 处（{source}）")
+        raise HotkeyEditError(
+            f"未找到快捷键：[{section}] {field} 第 {occurrence + 1} 处（{source}）"
+        )
 
     encoding = "utf-8-sig" if had_bom else "utf-8"
     payload = "".join(out).encode(encoding, errors="surrogateescape")
