@@ -62,6 +62,12 @@ def test_parses_multiple_keys_and_back(tmp_path):
         ("KeyCycle", "E", HotkeyKind.SWITCH, False),
         ("KeyCycle", "Q", HotkeyKind.SWITCH, True),
     ]
+    assert [(h.raw, h.field, h.occurrence) for h in hotkeys] == [
+        ("X", "key", 0),
+        ("XB_X", "key", 1),
+        ("E", "key", 0),
+        ("Q", "back", 0),
+    ]
 
 
 def test_skips_hidden_and_disabled_ini(tmp_path):

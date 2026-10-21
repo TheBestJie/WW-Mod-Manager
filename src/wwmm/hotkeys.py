@@ -29,6 +29,9 @@ class Hotkey:
     source: str
     kind: HotkeyKind
     back: bool = False
+    raw: str = ""
+    field: str = "key"
+    occurrence: int = 0
 
 
 # Readable labels for 3Dmigoto's single-token virtual key names (vkeys.h).
@@ -344,14 +347,14 @@ def _parse_ini(text: str, source: str) -> list[Hotkey]:
         if section is None or not section.casefold().startswith("key"):
             return
         kind = _kind(type_value)
-        for raw in raw_keys:
+        for index, raw in enumerate(raw_keys):
             display = format_key(raw)
             if display:
-                entries.append(Hotkey(display, section, source, kind, False))
-        for raw in raw_backs:
+                entries.append(Hotkey(display, section, source, kind, False, raw, "key", index))
+        for index, raw in enumerate(raw_backs):
             display = format_key(raw)
             if display:
-                entries.append(Hotkey(display, section, source, kind, True))
+                entries.append(Hotkey(display, section, source, kind, True, raw, "back", index))
 
     for line in text.splitlines():
         stripped = line.strip()
