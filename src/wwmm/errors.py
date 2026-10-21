@@ -34,3 +34,7 @@ class RosterBuildError(WWMMError):
 
 class HotkeyEditError(WWMMError):
     """A hotkey expression was rejected or could not be written back to an ini."""
+
+
+class SelfUpdateError(WWMMError):
+    """The GitHub release check or a self update step failed."""
