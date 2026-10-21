@@ -7,6 +7,7 @@ nothing here touches the network, git or uv.
 from __future__ import annotations
 
 import asyncio
+import logging
 from pathlib import Path
 
 import pytest
@@ -299,6 +300,44 @@ async def test_startup_check_runs_only_once_per_app(app, monkeypatch):
 
         assert len(calls) == 1
         assert len(_update_notifications(notifications)) == 1
+
+
+async def test_call_keeps_unexpected_callback_errors_visible(app, caplog):
+    """A bug inside a UI callback must stay visible; a dead app must stay quiet."""
+
+    def boom() -> None:
+        raise AttributeError("release.latest is missing")
+
+    async with app.run_test(size=(100, 30)) as pilot:
+        home = app.screen
+        assert isinstance(home, HomeScreen)
+        await pilot.pause()
+
+        with caplog.at_level(logging.DEBUG, logger="wwmm.screens.home"):
+            await asyncio.to_thread(home._call, boom)  # must not escape the worker
+
+        errors = [
+            record
+            for record in caplog.records
+            if record.name == "wwmm.screens.home" and record.levelno >= logging.ERROR
+        ]
+        assert len(errors) == 1
+        assert errors[0].getMessage() == "UI callback failed"
+        assert errors[0].exc_info is not None
+
+        caplog.clear()
+        loop = app._loop
+        app._loop = None  # exactly the precondition App.call_from_thread checks
+        try:
+            with caplog.at_level(logging.DEBUG, logger="wwmm.screens.home"):
+                await asyncio.to_thread(home._call, boom)
+        finally:
+            app._loop = loop
+
+        records = [record for record in caplog.records if record.name == "wwmm.screens.home"]
+        assert records
+        assert all(record.levelno == logging.DEBUG for record in records)
+        assert "not running" in records[0].getMessage()
 
 
 @pytest.mark.parametrize("fixture_name", ["app", "app_without_mods", "sparse_app"])

@@ -59,9 +59,13 @@ class SelfUpdateScreen(ModalScreen[None]):
         """Hop back to the UI thread, tolerating an app that already quit."""
         try:
             self.app.call_from_thread(callback, *args)
-        except Exception:  # a UI callback must never kill the worker
-            log.debug("UI callback failed", exc_info=True)
-            return
+        except RuntimeError:
+            # Expected: the app shut down while the worker was still running.
+            log.debug("UI callback dropped: app is not running", exc_info=True)
+        except Exception:
+            # A UI callback must never kill the worker, but a bug in the
+            # callback is not a network failure: it has to stay visible.
+            log.exception("UI callback failed")
 
     @work(thread=True, exclusive=True)
     def _run_check(self) -> None:
