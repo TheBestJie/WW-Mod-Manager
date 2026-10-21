@@ -219,11 +219,12 @@ _USAGE_HINT = (
 )
 _PUNCTUATION_HINT = (
     "不支持的按键：{}；单字符只支持字母 A–Z 和数字 0–9，"
-    "符号请写 VK 名称（如 ; → VK_OEM_1、/ → VK_OEM_2、= → VK_OEM_PLUS）"
+    "符号请写 VK 名称（如 ; → VK_OEM_1、/ → VK_OEM_2、= → VK_OEM_PLUS、' → VK_OEM_7）"
 )
 _XBOX_HINT = "不支持的按键：{}；可用写法：{}（可带手柄编号 1–4，如 XB2_LEFT_SHOULDER）"
 _MODIFIER_ONLY_HINT = (
-    "至少需要一个按键，不能只写修饰键；若确实要绑定 Windows 键本身，请写 0x5B / 0x5C"
+    "至少需要一个按键，不能只写修饰键；ctrl/alt/shift 键本身请写 VK_LCONTROL 这类分侧名，"
+    "Windows 键请写 0x5B / 0x5C"
 )
 _XBOX_BUTTON_LIST = "、".join(f"XB_{name}" for name in sorted(_XBOX_BUTTONS))
 
