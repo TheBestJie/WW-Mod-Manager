@@ -211,7 +211,8 @@ wwmm update --no-create         # 只更新角色表，不补角色目录
 - 有新版本：给出版本对比，点「更新」后按当前安装方式自动选择路径，完成后需重启 `wwmm`：
   - `git clone` + `install.sh` 的 editable 安装：执行 `git pull --ff-only`，再执行
     `uv tool install --editable --force <仓库路径>`；
-  - 从 Releases 下载源码包解压后 `install.sh` 的安装（目录里没有 `.git`）：下载该 tag 的源码包，
+  - 从 Releases 下载源码包解压后 `install.sh` 的安装（目录里没有 `.git`）：从
+    `codeload.github.com` 下载该 tag 的源码包（连接抖动时自动重试 3 次），
     校验路径后解压，把新源码覆盖到安装目录（先整体备份为
     `<安装目录>.bak-v<旧版本>-<时间戳>`，`.git`、`.venv`、`data/` 等本地条目永不覆盖），
     再执行同一条 `uv tool install --editable --force <安装目录>`；成功通知里会给出备份路径，
@@ -222,10 +223,10 @@ wwmm update --no-create         # 只更新角色表，不补角色目录
   找不到时给出手动更新地址，不做任何改动。
 
 > **v1.3.1 及更早版本的 Releases 安装**：那些版本的判断逻辑只认 `.git`，点「更新」仍会提示
-> 「未找到可自动更新的 git 仓库」。手动更新一次到 v1.3.2 后，界面里的「更新」就能直接用了：
+> 「未找到可自动更新的 git 仓库」。手动更新一次到 v1.3.3 后，界面里的「更新」就能直接用了：
 >
 > ```bash
-> git clone --depth 1 --branch v1.3.2 https://github.com/TheBestJie/WW-Mod-Manager
+> git clone --depth 1 --branch v1.3.3 https://github.com/TheBestJie/WW-Mod-Manager
 > cd WW-Mod-Manager && ./install.sh
 > ```
 
@@ -288,7 +289,7 @@ wwmm update --no-create         # 只更新角色表，不补角色目录
 断言和 `uv.lock` 的包版本会跟着变，跑一次 `uv sync` 加 `pytest` 就知道有没有漏）：
 
 ```bash
-git tag v1.3.2
+git tag v1.3.3
 git push origin main --tags
 ```
 

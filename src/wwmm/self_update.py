@@ -4,8 +4,9 @@ Two install shapes are supported:
 
 * a git checkout (``git clone`` + ``install.sh``) is fast-forwarded in place;
 * a release archive unpacked from the Releases page has no ``.git`` to pull
-  from, so the new tag's source archive is downloaded and merged over the
-  install directory after backing the previous tree up.
+  from, so the new tag's source archive is downloaded (from codeload, with
+  retries) and merged over the install directory after backing the previous
+  tree up.
 
 Both paths finish with ``uv tool install --editable --force`` so the entry point
 picks up the new sources on the next start.
@@ -24,6 +25,7 @@ import time
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from wwmm import __version__
@@ -34,11 +36,15 @@ log = logging.getLogger(__name__)
 REPO_SLUG = "TheBestJie/WW-Mod-Manager"
 RELEASES_API_URL = f"https://api.github.com/repos/{REPO_SLUG}/releases/latest"
 RELEASES_PAGE_URL = f"https://github.com/{REPO_SLUG}/releases/latest"
-ARCHIVE_URL_TEMPLATE = f"https://github.com/{REPO_SLUG}/archive/refs/tags/{{tag}}.tar.gz"
+# codeload is what github.com redirects to; asking it directly skips a
+# cross-host redirect that times out on some networks.
+ARCHIVE_URL_TEMPLATE = f"https://codeload.github.com/{REPO_SLUG}/tar.gz/refs/tags/{{tag}}"
 PROJECT_NAME = "ww-mod-manager"
 USER_AGENT = f"wwmm/{__version__}"
 COMMAND_TIMEOUT = 60
-ARCHIVE_TIMEOUT = 60
+ARCHIVE_TIMEOUT = 30
+NET_ATTEMPTS = 3
+RETRY_DELAYS = (1.0, 3.0)
 MAX_ERROR_DETAIL = 200
 COPY_CHUNK = 256 * 1024
 
@@ -109,13 +115,34 @@ def _is_newer(remote: tuple[int, ...], current: tuple[int, ...]) -> bool:
     return remote_padded > current_padded
 
 
-def fetch_latest_release(url: str = RELEASES_API_URL, timeout: float = 15) -> ReleaseInfo:
-    request = Request(url, headers={"User-Agent": USER_AGENT})
-    try:
+def _fetch_with_retry(label: str, factory, attempts: int = NET_ATTEMPTS):
+    """Run ``factory`` up to ``attempts`` times, pausing between transport errors.
+
+    GitHub's front hosts time out intermittently on some networks, and a single
+    attempt would fail the update the user is watching in the dialog.
+    """
+    last: OSError | None = None
+    for index in range(attempts):
+        try:
+            return factory()
+        except HTTPError as exc:
+            raise SelfUpdateError(f"{label}：{exc}") from exc
+        except OSError as exc:
+            last = exc
+            if index + 1 < attempts:
+                time.sleep(RETRY_DELAYS[min(index, len(RETRY_DELAYS) - 1)])
+    raise SelfUpdateError(f"{label}：{last}（已重试 {attempts} 次，请检查网络或代理）")
+
+
+def fetch_latest_release(
+    url: str = RELEASES_API_URL, timeout: float = 15, attempts: int = NET_ATTEMPTS
+) -> ReleaseInfo:
+    def _get() -> bytes:
+        request = Request(url, headers={"User-Agent": USER_AGENT})
         with urlopen(request, timeout=timeout) as response:
-            payload = response.read()
-    except OSError as exc:
-        raise SelfUpdateError(f"获取 GitHub release 失败：{exc}") from exc
+            return response.read()
+
+    payload = _fetch_with_retry("获取 GitHub release 失败", _get, attempts)
 
     try:
         data = json.loads(payload)
@@ -231,19 +258,25 @@ def _validate_tag(tag: str) -> str:
     return tag
 
 
-def download_release_archive(tag: str, dest_dir: Path, timeout: float = ARCHIVE_TIMEOUT) -> Path:
+def download_release_archive(
+    tag: str,
+    dest_dir: Path,
+    timeout: float = ARCHIVE_TIMEOUT,
+    attempts: int = NET_ATTEMPTS,
+) -> Path:
     """Download the source archive GitHub builds for ``tag`` into ``dest_dir``."""
     _validate_tag(tag)
     url = ARCHIVE_URL_TEMPLATE.format(tag=tag)
     dest_dir = Path(dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
     target = dest_dir / f"{PROJECT_NAME}-{tag.lstrip('vV')}.tar.gz"
-    request = Request(url, headers={"User-Agent": USER_AGENT})
-    try:
+
+    def _get() -> None:
+        request = Request(url, headers={"User-Agent": USER_AGENT})
         with urlopen(request, timeout=timeout) as response, target.open("wb") as handle:
             shutil.copyfileobj(response, handle, COPY_CHUNK)
-    except OSError as exc:
-        raise SelfUpdateError(f"下载源码包失败：{exc}") from exc
+
+    _fetch_with_retry("下载源码包失败", _get, attempts)
     if target.stat().st_size == 0:
         raise SelfUpdateError("下载源码包失败：内容为空")
     return target

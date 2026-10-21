@@ -47,6 +47,13 @@ def _write_pyproject(root: Path, version: str = "1.3.0", name: str = "ww-mod-man
     return path
 
 
+@pytest.fixture(autouse=True)
+def _silence_retry_delays(monkeypatch):
+    """Retry back-off is real in production; tests only care about the attempts."""
+
+    monkeypatch.setattr("wwmm.self_update.time.sleep", lambda seconds: None)
+
+
 class _FakeResponse:
     def __init__(self, payload: bytes):
         self._payload = payload
@@ -662,3 +669,70 @@ def test_download_rejects_an_empty_body(tmp_path, monkeypatch):
 
     with pytest.raises(SelfUpdateError, match="内容为空"):
         download_release_archive("v1.4.0", tmp_path / "dl")
+
+
+def test_download_retries_a_transient_error(tmp_path, monkeypatch):
+    calls: list[int] = []
+    payload = b"tarball-bytes"
+
+    def flaky_urlopen(request, timeout=None):
+        calls.append(1)
+        if len(calls) == 1:
+            raise OSError("timed out")
+        return _FakeResponse(payload)
+
+    monkeypatch.setattr("wwmm.self_update.urlopen", flaky_urlopen)
+
+    target = download_release_archive("v1.4.0", tmp_path / "dl")
+
+    assert target.read_bytes() == payload
+    assert len(calls) == 2
+
+
+def test_download_gives_up_after_three_attempts(tmp_path, monkeypatch):
+    calls: list[int] = []
+
+    def dead_urlopen(request, timeout=None):
+        calls.append(1)
+        raise OSError("timed out")
+
+    monkeypatch.setattr("wwmm.self_update.urlopen", dead_urlopen)
+
+    with pytest.raises(SelfUpdateError, match="已重试 3 次") as excinfo:
+        download_release_archive("v1.4.0", tmp_path / "dl")
+
+    assert len(calls) == 3
+    assert "timed out" in str(excinfo.value)
+
+
+def test_fetch_latest_release_retries_a_transient_error(monkeypatch):
+    calls: list[int] = []
+    payload = b'{"tag_name": "v1.4.0", "html_url": "https://example.test/r"}'
+
+    def flaky_urlopen(request, timeout=None):
+        calls.append(1)
+        if len(calls) == 1:
+            raise OSError("connection reset")
+        return _FakeResponse(payload)
+
+    monkeypatch.setattr("wwmm.self_update.urlopen", flaky_urlopen)
+
+    release = fetch_latest_release()
+
+    assert release.version == "1.4.0"
+    assert len(calls) == 2
+
+
+def test_download_uses_the_codeload_host(tmp_path, monkeypatch):
+    """github.com redirects to codeload; asking it directly avoids that hop."""
+    seen: dict = {}
+
+    def fake_urlopen(request, timeout=None):
+        seen["url"] = request.full_url
+        return _FakeResponse(b"bytes")
+
+    monkeypatch.setattr("wwmm.self_update.urlopen", fake_urlopen)
+
+    download_release_archive("v1.4.0", tmp_path / "dl")
+
+    assert seen["url"].startswith("https://codeload.github.com/TheBestJie/WW-Mod-Manager/")
