@@ -155,15 +155,23 @@ mod 处于禁用状态时，弹窗会提示这些按键在游戏里不会生效�
 键位写法必须是 XXMI（3Dmigoto `vkeys.h`）支持的组合，用空格或 `+` 分隔：
 
 ```text
-ctrl alt f7      Ctrl+Alt+K
-vk_insert        VK_INSERT
-0x70             XB1_A
-no_ctrl f7
+ctrl alt f7      → ctrl alt VK_F7
+Ctrl+Backspace   → ctrl VK_BACK
+ctrl semicolon   → ctrl VK_OEM_1
+vk_insert        → VK_INSERT
+0x70             → 0x70
+XB1_A            no_ctrl f7
 ```
 
-即单个字符、`VK_` 名称（可省略 `VK_` 前缀）、`0x` 十六进制码、`XB_` 手柄键和 `no_`
-排除前缀。中文、乱码 token、空输入和 WWMI 不认识的组合会被拒绝并给出中文错误，
-不会写进 ini。
+即单个字符（只限字母 `a`–`z` 和数字 `0`–`9`，符号请写 `VK_OEM_1` 这类键名）、`VK_` 名称
+（可省略 `VK_` 前缀）、`0x` 十六进制码、`XB_` 手柄键和 `no_` 排除前缀。输入会先归一成
+游戏真正认识的 `vkeys.h` 写法再写进 ini（修饰键小写 `ctrl`/`alt`/`shift`/`win`，其余用
+`VK_` 常量，字母统一大写），所以 `Backspace`、`SEMICOLON` 这类展示标签会各自落成
+`VK_BACK`、`VK_OEM_1` 而不是原样写进去。中文、乱码 token、空输入、只写排除项和 WWMI
+不认识的组合会被拒绝并给出中文错误，不会写进 ini。
+
+ini 里 `key = CTRL 0 ; 说明` 这种行尾注释不会被当成按键：解析时只在 `;`/`#` 前有空白时
+才截掉注释，所以 `key = ;` 仍然是分号键。写回时目标行原有的行尾注释会保留。
 
 ## 更新角色表
 

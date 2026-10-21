@@ -66,7 +66,7 @@ async def test_edit_flow_rewrites_ini(app, mods_tree):
         await pilot.pause()
 
         assert not isinstance(app.screen, HotkeyEditScreen)
-        assert ini.read_text(encoding="utf-8") == "[KeyHair]\nkey = ctrl k\ntype = cycle\n"
+        assert ini.read_text(encoding="utf-8") == "[KeyHair]\nkey = ctrl K\ntype = cycle\n"
         assert [(hotkey.section, hotkey.display_key) for hotkey in screen.hotkeys] == [
             ("KeyHair", "Ctrl+K")
         ]

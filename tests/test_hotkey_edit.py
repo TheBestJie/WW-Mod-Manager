@@ -12,20 +12,89 @@ def _write(path: Path, text: str) -> None:
 
 
 def test_validate_accepts_supported_syntax():
-    assert validate_key_expr("ctrl alt f7") == "ctrl alt f7"
-    assert validate_key_expr("Ctrl+Alt+K") == "Ctrl+Alt+K".replace("+", " ")
+    assert validate_key_expr("ctrl alt f7") == "ctrl alt VK_F7"
+    assert validate_key_expr("Ctrl+Alt+K") == "ctrl alt K"
     assert validate_key_expr("VK_INSERT") == "VK_INSERT"
     assert validate_key_expr("0x70") == "0x70"
     assert validate_key_expr("XB_LEFT_TRIGGER") == "XB_LEFT_TRIGGER"
-    assert validate_key_expr("no_modifiers /") == "no_modifiers /"
+    assert validate_key_expr("no_modifiers VK_OEM_2") == "no_modifiers VK_OEM_2"
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        # Display labels from hotkeys._VK_LABELS are not 3Dmigoto syntax; they
+        # must be normalised to the vkeys.h constant instead of rejected or
+        # written through verbatim.
+        ("ctrl Backspace", "ctrl VK_BACK"),
+        ("BACK_SPACE", "VK_BACK"),
+        ("esc", "VK_ESCAPE"),
+        ("enter", "VK_RETURN"),
+        ("pgup pgdn del ins", "VK_PRIOR VK_NEXT VK_DELETE VK_INSERT"),
+        ("caps", "VK_CAPITAL"),
+        ("ctrl semicolon", "ctrl VK_OEM_1"),
+        ("ctrl plus", "ctrl VK_OEM_PLUS"),
+        ("ctrl equals", "ctrl VK_OEM_PLUS"),
+        ("printscreen", "VK_SNAPSHOT"),
+        ("win", "win"),
+        ("VK_RWIN", "win"),
+        ("vk_f7", "VK_F7"),
+        ("f7", "VK_F7"),
+        ("backspace", "VK_BACK"),
+        ("a", "A"),
+        ("0", "0"),
+        ("xb2_left_shoulder", "XB2_LEFT_SHOULDER"),
+        ("XB_A", "XB_A"),
+        ("Ctrl+Shift+Q", "ctrl shift Q"),
+        ("VK_LSHIFT", "VK_LSHIFT"),
+        ("0X7B", "0X7B"),
+        ("f7 no_backspace", "VK_F7 no_vk_back"),
+        ("f7 no_control", "VK_F7 no_ctrl"),
+        ("f7 no_menu", "VK_F7 no_alt"),
+        ("f7 no_win", "VK_F7 no_win"),
+        ("f7 NO_MODIFIERS", "VK_F7 no_modifiers"),
+    ],
+)
+def test_validate_normalises_to_3dmigoto_key_names(raw, expected):
+    assert validate_key_expr(raw) == expected
+
+
+@pytest.mark.parametrize(
+    ("bad", "hint"),
+    [
+        ("XB_garbage", "XB_LEFT_TRIGGER"),
+        ("ctrl XB_garbage", "XB_RIGHT_THUMB"),
+        (";", "VK_OEM_1"),
+        ("ctrl ;", "VK_OEM_1"),
+        ("ctrl /", "VK_OEM_2"),
+        ("ctrl =", "VK_OEM_PLUS"),
+        ("INLINE", "不支持的按键"),
+        ("NOTE", "不支持的按键"),
+        ("VK_SOME_UNKNOWN", "不支持的按键"),
+        ("ctrl 中文", "不支持的按键"),
+    ],
+)
+def test_validate_rejects_non_3dmigoto_tokens(bad, hint):
+    with pytest.raises(HotkeyEditError) as excinfo:
+        validate_key_expr(bad)
+    assert hint in str(excinfo.value)
+
+
+def test_validation_does_not_use_the_display_label_table():
+    import wwmm.hotkey_edit as module
+
+    assert not hasattr(module, "_VK_LABELS")
+    assert "BACKSPACE" not in module._VK_NAMES
+    assert "BACK" in module._VK_NAMES
+    assert all(len(name) > 1 for name in module._VK_NAMES)
 
 
 def test_validate_rejects_expressions_without_real_keys():
-    for bad in ("no_ctrl", "no_modifiers", "ctrl no_ctrl"):
+    for bad in ("no_ctrl", "no_modifiers", "ctrl no_ctrl", "win no_win", "f7 no_vk_f7"):
         with pytest.raises(HotkeyEditError, match="排除项"):
             validate_key_expr(bad)
-    assert validate_key_expr("ctrl no_modifiers /") == "ctrl no_modifiers /"
-    assert validate_key_expr("ctrl alt f7") == "ctrl alt f7"
+    assert validate_key_expr("ctrl no_modifiers VK_OEM_2") == "ctrl no_modifiers VK_OEM_2"
+    assert validate_key_expr("ctrl alt VK_F7") == "ctrl alt VK_F7"
     assert validate_key_expr("0x70") == "0x70"
     assert validate_key_expr("XB_X") == "XB_X"
 
@@ -137,6 +206,25 @@ def test_validate_rejects_bare_hex_and_signed_numbers():
     assert validate_key_expr("0") == "0"
     assert validate_key_expr("5") == "5"
     assert validate_key_expr("0X7B") == "0X7B"
+
+
+def test_edit_round_trip_drops_inline_comment_from_the_expression(tmp_path):
+    """A line comment must not leak into the prefilled expression or its edit."""
+    mod = tmp_path / "Mod"
+    _write(mod / "mod.ini", "[KeyHair]\nkey = CTRL 0 ; 说明\ntype = cycle")
+
+    hotkey = parse_mod_hotkeys(mod)[0]
+    assert hotkey.raw == "CTRL 0"
+    assert hotkey.display_key == "Ctrl+0"
+
+    normalized = validate_key_expr(hotkey.raw)
+    assert normalized == "ctrl 0"
+    apply_hotkey(mod, "mod.ini", hotkey.section, hotkey.field, hotkey.occurrence, normalized)
+    assert (mod / "mod.ini").read_text(encoding="utf-8").splitlines() == [
+        "[KeyHair]",
+        "key = ctrl 0 ; 说明",
+        "type = cycle",
+    ]
 
 
 def test_apply_keeps_bomless_file_bomless(tmp_path):

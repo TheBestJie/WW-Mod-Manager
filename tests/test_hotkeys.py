@@ -94,6 +94,25 @@ def test_semicolon_key_is_not_a_comment(tmp_path):
     assert parse_mod_hotkeys(mod)[0].display_key == ";"
 
 
+def test_inline_comment_after_key_is_stripped(tmp_path):
+    mod = tmp_path / "Mod"
+    _write(
+        mod / "mod.ini",
+        "[KeyHair]\nkey = CTRL 0 ; 说明\nBack = Q # 备注\ntype = cycle",
+    )
+    hotkeys = parse_mod_hotkeys(mod)
+    assert [(h.field, h.raw, h.display_key) for h in hotkeys] == [
+        ("key", "CTRL 0", "Ctrl+0"),
+        ("back", "Q", "Q"),
+    ]
+
+
+def test_lone_comment_marker_after_key_is_stripped(tmp_path):
+    mod = tmp_path / "Mod"
+    _write(mod / "mod.ini", "[KeyHair]\nkey = X ;\ntype = cycle")
+    assert parse_mod_hotkeys(mod)[0].raw == "X"
+
+
 def test_reads_nested_ini_and_keeps_relative_source(tmp_path):
     mod = tmp_path / "Mod"
     _write(mod / "mod.ini", "[KeyA]\nkey = 1\ntype = cycle")

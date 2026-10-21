@@ -14,6 +14,9 @@ log = logging.getLogger(__name__)
 _SECTION_RE = re.compile(r"^\s*\[([^\]]+)\]\s*$")
 _FIELD_RE = re.compile(r"^\s*(key|back|type)\s*=\s*(.*?)\s*$", re.IGNORECASE)
 _XBOX_RE = re.compile(r"^XB([1-4])?_(.+)$", re.IGNORECASE)
+# A trailing comment starts only after whitespace, so ``key = ;`` stays a
+# semicolon binding while ``key = CTRL 0 ; note`` drops the note.
+_INLINE_COMMENT_RE = re.compile(r"\s+[;#].*$")
 
 
 class HotkeyKind(str, Enum):
@@ -336,6 +339,11 @@ def _kind(type_value: str) -> HotkeyKind:
             return HotkeyKind.OTHER
 
 
+def _strip_inline_comment(value: str) -> str:
+    """Drop a trailing ``;``/``#`` comment from a ``key``/``back`` value."""
+    return _INLINE_COMMENT_RE.sub("", value).rstrip()
+
+
 def _parse_ini(text: str, source: str) -> list[Hotkey]:
     entries: list[Hotkey] = []
     section: str | None = None
@@ -387,9 +395,9 @@ def _parse_ini(text: str, source: str) -> list[Hotkey]:
             continue
         field, value = field_match.group(1).casefold(), field_match.group(2).strip()
         if field == "key":
-            raw_keys.append(value)
+            raw_keys.append(_strip_inline_comment(value))
         elif field == "back":
-            raw_backs.append(value)
+            raw_backs.append(_strip_inline_comment(value))
         else:
             type_value = value
 
