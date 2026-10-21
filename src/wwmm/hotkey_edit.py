@@ -22,11 +22,11 @@ def _valid_token(token: str) -> bool:
         return token.isascii() and token.isprintable()
     if _XBOX_RE.match(token) is not None:
         return True
-    try:
-        int(token, 16)
-    except ValueError:
-        pass
-    else:
+    if token.casefold().startswith("0x"):
+        try:
+            int(token, 16)
+        except ValueError:
+            return False
         return True
     name = token[3:] if token.casefold().startswith(("vk_", "no_")) else token
     return name.upper() in _VK_LABELS or token.upper() == "NO_MODIFIERS"
@@ -84,12 +84,15 @@ def apply_hotkey(
             and current.casefold() == want_section
             and field_match.group(1).casefold() == want_field
         ):
+            # Counted continuously across duplicated section instances on
+            # purpose: _parse_ini numbers occurrences the same way, so each
+            # parsed Hotkey round-trips back to its exact line.
             counter += 1
             if counter == occurrence + 1:
                 name = field_match.group(1)
                 new_body = re.sub(
-                    rf"^(\s*{re.escape(name)}\s*=\s*).*$",
-                    lambda match: match.group(1) + new_raw,
+                    rf"^(\s*{re.escape(name)}\s*=\s*)(.*?)(\s+[;#].*|\s*)$",
+                    lambda match: match.group(1) + new_raw + (match.group(3) or ""),
                     body,
                     count=1,
                     flags=re.IGNORECASE,

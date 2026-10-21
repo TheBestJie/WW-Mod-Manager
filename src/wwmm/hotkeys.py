@@ -342,16 +342,25 @@ def _parse_ini(text: str, source: str) -> list[Hotkey]:
     raw_keys: list[str] = []
     raw_backs: list[str] = []
     type_value = ""
+    # Running counts per (section name, field) across the whole file, so a
+    # duplicated section name keeps counting instead of restarting at 0. This
+    # mirrors how apply_hotkey scans the file and lets each Hotkey round-trip
+    # back to its exact line even when two sections share a name.
+    counts: dict[tuple[str, str], int] = {}
 
     def flush() -> None:
         if section is None or not section.casefold().startswith("key"):
             return
         kind = _kind(type_value)
-        for index, raw in enumerate(raw_keys):
+        for raw in raw_keys:
+            index = counts.get((section.casefold(), "key"), 0)
+            counts[(section.casefold(), "key")] = index + 1
             display = format_key(raw)
             if display:
                 entries.append(Hotkey(display, section, source, kind, False, raw, "key", index))
-        for index, raw in enumerate(raw_backs):
+        for raw in raw_backs:
+            index = counts.get((section.casefold(), "back"), 0)
+            counts[(section.casefold(), "back")] = index + 1
             display = format_key(raw)
             if display:
                 entries.append(Hotkey(display, section, source, kind, True, raw, "back", index))

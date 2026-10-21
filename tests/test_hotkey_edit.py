@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from wwmm.hotkey_edit import HotkeyEditError, apply_hotkey, validate_key_expr
+from wwmm.hotkeys import parse_mod_hotkeys
 
 
 def _write(path: Path, text: str) -> None:
@@ -74,3 +75,65 @@ def test_apply_missing_section_or_occurrence_raises(tmp_path):
     with pytest.raises(HotkeyEditError):
         apply_hotkey(mod, "mod.ini", "KeyHair", "key", 5, "ctrl k")
     assert (mod / "mod.ini").read_bytes() == original
+
+
+def test_apply_targets_correct_instance_for_duplicate_sections(tmp_path):
+    mod = tmp_path / "Mod"
+    _write(mod / "mod.ini", "[KeyHair]\nKey = X\n\n[KEYHAIR]\nKey = Y")
+    hotkeys = parse_mod_hotkeys(mod)
+    assert [(h.section, h.raw, h.field, h.occurrence) for h in hotkeys] == [
+        ("KeyHair", "X", "key", 0),
+        ("KEYHAIR", "Y", "key", 1),
+    ]
+
+    apply_hotkey(
+        mod, "mod.ini", hotkeys[1].section, hotkeys[1].field, hotkeys[1].occurrence, "ctrl k"
+    )
+    lines = (mod / "mod.ini").read_text(encoding="utf-8-sig").splitlines()
+    assert lines == ["[KeyHair]", "Key = X", "", "[KEYHAIR]", "Key = ctrl k"]
+
+    apply_hotkey(
+        mod, "mod.ini", hotkeys[0].section, hotkeys[0].field, hotkeys[0].occurrence, "alt j"
+    )
+    lines = (mod / "mod.ini").read_text(encoding="utf-8-sig").splitlines()
+    assert lines == ["[KeyHair]", "Key = alt j", "", "[KEYHAIR]", "Key = ctrl k"]
+
+
+def test_apply_preserves_inline_comment_and_trailing_space_on_target_line(tmp_path):
+    mod = tmp_path / "Mod"
+    _write(
+        mod / "mod.ini",
+        "[KeyHair]\nkey = ctrl 1 ; 说明\nBack = Q # 备注\n\n[KeyTail]\nKey = X   \nBack = W",
+    )
+    apply_hotkey(mod, "mod.ini", "KeyHair", "key", 0, "ctrl 2")
+    apply_hotkey(mod, "mod.ini", "KeyHair", "back", 0, "alt b")
+    apply_hotkey(mod, "mod.ini", "KeyTail", "key", 0, "alt n")
+    lines = (mod / "mod.ini").read_text(encoding="utf-8-sig").splitlines()
+    assert lines == [
+        "[KeyHair]",
+        "key = ctrl 2 ; 说明",
+        "Back = alt b # 备注",
+        "",
+        "[KeyTail]",
+        "Key = alt n   ",
+        "Back = W",
+    ]
+
+
+def test_validate_rejects_bare_hex_and_signed_numbers():
+    for bad in ("abc", "face", "-5", "0xzz"):
+        with pytest.raises(HotkeyEditError):
+            validate_key_expr(bad)
+    assert validate_key_expr("0") == "0"
+    assert validate_key_expr("5") == "5"
+    assert validate_key_expr("0X7B") == "0X7B"
+
+
+def test_apply_keeps_bomless_file_bomless(tmp_path):
+    mod = tmp_path / "Mod"
+    mod.mkdir()
+    ini = mod / "mod.ini"
+    original = b"[KeyHair]\n; comment\nkey = ctrl 1\nBack = Q\n"
+    ini.write_bytes(original)
+    apply_hotkey(mod, "mod.ini", "KeyHair", "key", 0, "ctrl 2")
+    assert ini.read_bytes() == original.replace(b"key = ctrl 1\n", b"key = ctrl 2\n")
