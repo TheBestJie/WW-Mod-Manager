@@ -11,9 +11,11 @@ from pathlib import Path
 
 import pytest
 from textual.containers import Vertical
-from textual.widgets import Button, Input, Static
+from textual.widgets import Button, Input, ListView, Static
 
 from wwmm.errors import SelfUpdateError
+from wwmm.screens.characters import CharactersScreen
+from wwmm.screens.home import HomeScreen
 from wwmm.screens.search import SearchScreen
 from wwmm.screens.self_update import SelfUpdateScreen
 from wwmm.self_update import (
@@ -58,6 +60,20 @@ def _capture_notifications(monkeypatch, app) -> list[tuple[str, dict]]:
         lambda message, **kwargs: notifications.append((message, kwargs)),
     )
     return notifications
+
+
+def _update_notifications(notifications: list[tuple[str, dict]]) -> list[tuple[str, dict]]:
+    """Notifications that could only come from the release check.
+
+    The app itself already notifies about repaired character folders, so a plain
+    "no notifications at all" assertion would be a lie.
+    """
+    return [
+        entry
+        for entry in notifications
+        if entry[1].get("severity") == "error"
+        or any(word in entry[0] for word in ("版本", "更新", "最新"))
+    ]
 
 
 async def _open(pilot) -> None:
@@ -189,6 +205,100 @@ async def test_update_failure_shows_error(app, monkeypatch):
         await pilot.press("escape")
         await pilot.pause()
         assert not isinstance(app.screen, SelfUpdateScreen)
+
+
+async def test_startup_notifies_when_newer(app, monkeypatch):
+    monkeypatch.setattr(app, "release_checker", lambda **kwargs: _newer_check())
+    notifications = _capture_notifications(monkeypatch, app)
+
+    async with app.run_test(size=(100, 30)) as pilot:
+        assert isinstance(app.screen, HomeScreen)
+        assert await _wait_for(
+            pilot, lambda: any("发现新版本" in message for message, _ in notifications)
+        )
+
+    startup = [entry for entry in notifications if "发现新版本" in entry[0]]
+    assert startup, notifications
+    message, kwargs = startup[-1]
+    assert "1.4.0" in message
+    assert "1.3.0" in message
+    assert "Ctrl+U" in message
+    assert kwargs["timeout"] == 15
+
+
+async def test_startup_check_failure_is_silent(app, monkeypatch):
+    calls: list[int] = []
+
+    def boom(**kwargs):
+        calls.append(1)
+        raise SelfUpdateError("超时")
+
+    monkeypatch.setattr(app, "release_checker", boom)
+    notifications = _capture_notifications(monkeypatch, app)
+
+    async with app.run_test(size=(100, 30)) as pilot:
+        lv = app.screen.query_one("#groups", ListView)
+        assert len(lv.children) >= 8
+        lv.index = 0
+        await pilot.pause()
+        await pilot.press("down")
+        await pilot.pause()
+        assert lv.index == 1
+        assert await _wait_for(pilot, lambda: bool(calls))
+        await pilot.pause()
+        await pilot.pause()
+
+    assert _update_notifications(notifications) == []
+
+
+async def test_startup_check_up_to_date_is_silent(app, monkeypatch):
+    calls: list[int] = []
+
+    def up_to_date(**kwargs):
+        """An up-to-date install: the real checker returns None."""
+        calls.append(1)
+
+    monkeypatch.setattr(app, "release_checker", up_to_date)
+    notifications = _capture_notifications(monkeypatch, app)
+
+    async with app.run_test(size=(100, 30)) as pilot:
+        assert await _wait_for(pilot, lambda: bool(calls))
+        await pilot.pause()
+        await pilot.pause()
+
+    assert _update_notifications(notifications) == []
+
+
+async def test_startup_check_runs_only_once_per_app(app, monkeypatch):
+    """Leaving and re-entering home (resume + refresh) must not notify again."""
+    calls: list[int] = []
+
+    def newer(**kwargs):
+        calls.append(1)
+        return _newer_check()
+
+    monkeypatch.setattr(app, "release_checker", newer)
+    notifications = _capture_notifications(monkeypatch, app)
+
+    async with app.run_test(size=(100, 30)) as pilot:
+        assert await _wait_for(pilot, lambda: bool(_update_notifications(notifications)))
+        assert len(_update_notifications(notifications)) == 1
+
+        app.screen.query_one("#groups", ListView).index = 1
+        await pilot.press("enter")
+        await pilot.pause()
+        assert isinstance(app.screen, CharactersScreen)
+
+        await pilot.press("escape")
+        await pilot.pause()
+        assert isinstance(app.screen, HomeScreen)
+
+        await pilot.press("r")  # refresh_view must not re-run the startup check
+        await pilot.pause()
+        await pilot.pause()
+
+        assert len(calls) == 1
+        assert len(_update_notifications(notifications)) == 1
 
 
 @pytest.mark.parametrize("fixture_name", ["app", "app_without_mods", "sparse_app"])
