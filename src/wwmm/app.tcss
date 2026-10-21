@@ -47,14 +47,17 @@ HotkeysScreen {
     padding-top: 1;
 }
 
-.hotkey-group {
+#hotkeys {
+    height: auto;
+    border: none;
+    padding: 0;
+    background: $surface;
+}
+
+#hotkeys > .option-list--option-disabled {
     color: $accent;
     text-style: bold;
     padding-top: 1;
-}
-
-.hotkey-table {
-    width: 1fr;
 }
 
 #hotkeys-hint {
