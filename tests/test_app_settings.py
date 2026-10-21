@@ -9,6 +9,14 @@ from wwmm.screens.home import HomeScreen
 from wwmm.screens.settings import SettingsScreen
 
 
+def _offline_release_checker(**kwargs):
+    return
+
+
+def _unsafe_self_updater(repo_root):
+    raise AssertionError(f"tests must monkeypatch self_updater (got {repo_root})")
+
+
 def _app_with_mods_dir(tmp_path, roster, mods_dir):
     store = ConfigStore(tmp_path / "config")
     config = Config(mods_dir=mods_dir, auto_create_folders=True)
@@ -20,6 +28,8 @@ def _app_with_mods_dir(tmp_path, roster, mods_dir):
         data_dir=tmp_path / "data",
         state_dir=tmp_path / "state",
         home_dir=tmp_path / "home",
+        release_checker=_offline_release_checker,
+        self_updater=_unsafe_self_updater,
     )
 
 

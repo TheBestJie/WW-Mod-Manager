@@ -14,6 +14,9 @@ log = logging.getLogger(__name__)
 _SECTION_RE = re.compile(r"^\s*\[([^\]]+)\]\s*$")
 _FIELD_RE = re.compile(r"^\s*(key|back|type)\s*=\s*(.*?)\s*$", re.IGNORECASE)
 _XBOX_RE = re.compile(r"^XB([1-4])?_(.+)$", re.IGNORECASE)
+# A trailing comment starts only after whitespace, so ``key = ;`` stays a
+# semicolon binding while ``key = CTRL 0 ; note`` drops the note.
+_INLINE_COMMENT_RE = re.compile(r"\s+[;#].*$")
 
 
 class HotkeyKind(str, Enum):
@@ -29,6 +32,9 @@ class Hotkey:
     source: str
     kind: HotkeyKind
     back: bool = False
+    raw: str = ""
+    field: str = "key"
+    occurrence: int = 0
 
 
 # Readable labels for 3Dmigoto's single-token virtual key names (vkeys.h).
@@ -333,25 +339,39 @@ def _kind(type_value: str) -> HotkeyKind:
             return HotkeyKind.OTHER
 
 
+def _strip_inline_comment(value: str) -> str:
+    """Drop a trailing ``;``/``#`` comment from a ``key``/``back`` value."""
+    return _INLINE_COMMENT_RE.sub("", value).rstrip()
+
+
 def _parse_ini(text: str, source: str) -> list[Hotkey]:
     entries: list[Hotkey] = []
     section: str | None = None
     raw_keys: list[str] = []
     raw_backs: list[str] = []
     type_value = ""
+    # Running counts per (section name, field) across the whole file, so a
+    # duplicated section name keeps counting instead of restarting at 0. This
+    # mirrors how apply_hotkey scans the file and lets each Hotkey round-trip
+    # back to its exact line even when two sections share a name.
+    counts: dict[tuple[str, str], int] = {}
 
     def flush() -> None:
         if section is None or not section.casefold().startswith("key"):
             return
         kind = _kind(type_value)
         for raw in raw_keys:
+            index = counts.get((section.casefold(), "key"), 0)
+            counts[(section.casefold(), "key")] = index + 1
             display = format_key(raw)
             if display:
-                entries.append(Hotkey(display, section, source, kind, False))
+                entries.append(Hotkey(display, section, source, kind, False, raw, "key", index))
         for raw in raw_backs:
+            index = counts.get((section.casefold(), "back"), 0)
+            counts[(section.casefold(), "back")] = index + 1
             display = format_key(raw)
             if display:
-                entries.append(Hotkey(display, section, source, kind, True))
+                entries.append(Hotkey(display, section, source, kind, True, raw, "back", index))
 
     for line in text.splitlines():
         stripped = line.strip()
@@ -375,9 +395,9 @@ def _parse_ini(text: str, source: str) -> list[Hotkey]:
             continue
         field, value = field_match.group(1).casefold(), field_match.group(2).strip()
         if field == "key":
-            raw_keys.append(value)
+            raw_keys.append(_strip_inline_comment(value))
         elif field == "back":
-            raw_backs.append(value)
+            raw_backs.append(_strip_inline_comment(value))
         else:
             type_value = value
 

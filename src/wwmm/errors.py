@@ -30,3 +30,11 @@ class RosterDowngradeError(RosterUpdateError):
 
 class RosterBuildError(WWMMError):
     """The roster could not be built from upstream data."""
+
+
+class HotkeyEditError(WWMMError):
+    """A hotkey expression was rejected or could not be written back to an ini."""
+
+
+class SelfUpdateError(WWMMError):
+    """The GitHub release check or a self update step failed."""

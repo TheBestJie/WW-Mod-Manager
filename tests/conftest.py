@@ -30,6 +30,16 @@ def roster_file():
     return FIXTURES / "roster.json"
 
 
+def _offline_release_checker(**kwargs):
+    """Fake release check so tests never reach the network."""
+    return
+
+
+def _unsafe_self_updater(repo_root):
+    """Fail loud: the real updater would git pull the checkout under test."""
+    raise AssertionError(f"tests must monkeypatch self_updater (got {repo_root})")
+
+
 MODS_TREE_FILES = (
     "aemeath/Aemeath - Sky Pixie/mod.ini",
     "aemeath/Aemeath - Sky Pixie/Weapon/Sword/mod.ini",
@@ -73,6 +83,8 @@ def app(tmp_path, roster, mods_tree):
         data_dir=tmp_path / "data",
         state_dir=tmp_path / "state",
         home_dir=tmp_path / "home",
+        release_checker=_offline_release_checker,
+        self_updater=_unsafe_self_updater,
     )
 
 
@@ -86,6 +98,8 @@ def app_without_mods(tmp_path, roster):
         data_dir=tmp_path / "data",
         state_dir=tmp_path / "state",
         home_dir=tmp_path / "home",
+        release_checker=_offline_release_checker,
+        self_updater=_unsafe_self_updater,
     )
 
 
@@ -103,4 +117,6 @@ def sparse_app(tmp_path, roster):
         data_dir=tmp_path / "data",
         state_dir=tmp_path / "state",
         home_dir=tmp_path / "home",
+        release_checker=_offline_release_checker,
+        self_updater=_unsafe_self_updater,
     )

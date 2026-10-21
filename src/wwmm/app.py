@@ -5,8 +5,10 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
+from typing import ClassVar
 
 from textual.app import App
+from textual.binding import Binding
 
 from wwmm.clipboard import copy_with_command
 from wwmm.config import Config, ConfigStore
@@ -17,7 +19,9 @@ from wwmm.roster import Roster, ensure_character_dirs
 from wwmm.roster_update import UpdateResult, update_roster
 from wwmm.scanner import scan
 from wwmm.screens.home import HomeScreen
+from wwmm.screens.self_update import SelfUpdateScreen
 from wwmm.screens.settings import SettingsScreen
+from wwmm.self_update import check_for_update, perform_self_update
 
 log = logging.getLogger(__name__)
 
@@ -28,6 +32,11 @@ class WWMMApp(App):
     CSS_PATH = "app.tcss"
     TITLE = "WWMM"
     SUB_TITLE = "鸣潮 Mod 管理器"
+    # priority=True: Input binds ctrl+u to delete_left_all, so a plain app binding
+    # would never fire while a text field has focus.
+    BINDINGS: ClassVar[list[Binding]] = [
+        Binding("ctrl+u", "check_app_update", "检查更新", priority=True)
+    ]
 
     def __init__(
         self,
@@ -40,6 +49,8 @@ class WWMMApp(App):
         home_dir: Path,
         updater=update_roster,
         detector=detect_mods_dirs,
+        release_checker=check_for_update,
+        self_updater=perform_self_update,
     ) -> None:
         super().__init__()
         self.config_store = config_store
@@ -50,6 +61,8 @@ class WWMMApp(App):
         self.home_dir = Path(home_dir)
         self.updater = updater
         self.detector = detector
+        self.release_checker = release_checker
+        self.self_updater = self_updater
 
         self.snapshot: Snapshot | None = None
         self.created_dirs: list[Path] = []
@@ -109,6 +122,12 @@ class WWMMApp(App):
         self.created_dirs = []
         self._ensure_character_dirs()
         return self.reload_snapshot()
+
+    def action_check_app_update(self) -> None:
+        """Ctrl+U: check GitHub for a newer release of WWMM itself."""
+        if isinstance(self.screen, SelfUpdateScreen):
+            return
+        self.push_screen(SelfUpdateScreen())
 
     async def copy_text(self, text: str) -> bool:
         """Copy text to the terminal clipboard and desktop clipboard tools.

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from typing import ClassVar
 
+from textual import work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
@@ -11,6 +13,9 @@ from textual.screen import Screen
 from textual.widgets import Footer, ListItem, ListView, Static
 
 from wwmm.constants import GROUP_ORDER
+from wwmm.self_update import UpdateCheck
+
+log = logging.getLogger(__name__)
 
 
 class HomeScreen(Screen):
@@ -31,9 +36,45 @@ class HomeScreen(Screen):
     def on_mount(self) -> None:
         self.refresh_view()
         self.query_one("#groups", ListView).focus()
+        # Fire-and-forget: the release check must never delay or block the TUI.
+        self._startup_update_check()
 
     def on_screen_resume(self) -> None:
+        # Coming back from another screen must not re-run the release check.
         self.refresh_view()
+
+    @work(thread=True, exclusive=True, exit_on_error=False)
+    def _startup_update_check(self) -> None:
+        """Silently compare the local version with the latest GitHub release."""
+        try:
+            check = self.app.release_checker()
+        except Exception as exc:
+            # A startup check failure stays invisible: log only, never notify.
+            log.debug("启动版本检查失败：%s", exc, exc_info=True)
+            return
+        if check is None:
+            return
+        self._call(self._on_newer_release, check)
+
+    def _call(self, callback, *args) -> None:
+        """Hop back to the UI thread, tolerating an app that already quit."""
+        try:
+            self.app.call_from_thread(callback, *args)
+        except RuntimeError:
+            # Expected: the app shut down while the worker was still running.
+            log.debug("UI callback dropped: app is not running", exc_info=True)
+        except Exception:
+            # A UI callback must never kill the worker, but a bug in the
+            # callback is not a network failure: it has to stay visible.
+            log.exception("UI callback failed")
+
+    def _on_newer_release(self, check: UpdateCheck) -> None:
+        if not self.is_attached:
+            return
+        self.notify(
+            f"发现新版本 v{check.latest.version}（当前 v{check.current}）· Ctrl+U 立即更新",
+            timeout=15,
+        )
 
     @property
     def group_names(self) -> list[str]:

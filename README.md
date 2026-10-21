@@ -102,9 +102,15 @@ wwmm
 | mod 列表 | `c` | 复制当前 mod 文件夹路径 |
 | mod 列表 | `/` | 过滤 mod |
 | mod 列表 | `r` | 刷新 |
+| 快捷键弹窗 | `R` | 修改选中键位（写回 ini）；小写 `r` 亦可 |
+| 任意界面 | `Ctrl+U` | 检查更新（有新版本时可直接更新） |
 | 任意列表 | `Esc` | 返回上一级 |
 
 切换 mod 后回到游戏按 `F10` 让 WWMI 重新加载。
+
+`Ctrl+U` 是全局绑定且优先级最高：在设置页、搜索框、快捷键编辑屏等**任何输入框里按下它
+都只会弹出检查更新窗口**，不会删除光标到行首的内容。输入框里要删左侧内容见
+[关于 `Ctrl+U`](#关于-ctrlu)。
 
 ## 启用/禁用语义
 
@@ -132,8 +138,48 @@ wwmm
 同一段落里的多条 `Key`/`Back` 会各占一行；`Back` 行标注「反向」。
 WWMI 全局按键（F6/F10/F12 等）在 `Core/WWMI/KeyBindings.ini`，不在 mod 列表里。
 
-只读取 mod 目录下会生效的 ini（跳过 `DISABLED*` 和隐藏目录），不改任何文件。
+只读取 mod 目录下会生效的 ini（跳过 `DISABLED*` 和隐藏目录），查看时不改任何文件。
 mod 处于禁用状态时，弹窗会提示这些按键在游戏里不会生效。
+
+### 修改快捷键
+
+在快捷键弹窗里选中一行按 `R`（Shift+R，小写 `r` 亦可）进入编辑屏：
+
+- `Enter` 确认并写回 ini，`Esc` 取消（ini 保持原样）；
+- 输入框下方实时显示格式化后的预览，非法写法会把中文错误就地显示出来；
+- 写回是原子的（临时文件 + `os.replace`）：只替换目标行，BOM、`;` 注释、空行、
+  其他 section 和同段的其他 `key`/`back` 行都原样保留；同段有多条 `key` 时按出现次序
+  定位，改第 2 条不会动第 1 条，改 `back` 不会动 `key`；
+- 分组标题行（切换/长按/其他）不能编辑。
+
+键位写法必须是 XXMI（3Dmigoto `vkeys.h`）支持的组合，用空格或 `+` 分隔：
+
+```text
+ctrl alt f7      → ctrl alt VK_F7
+Ctrl+Backspace   → ctrl VK_BACK
+ctrl semicolon   → ctrl VK_OEM_1
+vk_insert        → VK_INSERT
+0x70             → 0x70
+XB1_A            → XB1_A
+no_ctrl f7       → no_ctrl VK_F7
+```
+
+即单个字符（只限字母 `a`–`z` 和数字 `0`–`9`，符号请写 `VK_OEM_1` 这类键名）、`VK_` 名称
+（可省略 `VK_` 前缀）、`0x` 十六进制码、`XB_` 手柄键和 `no_` 排除前缀。输入会先归一成
+游戏真正认识的 `vkeys.h` 写法再写进 ini（修饰键小写 `ctrl`/`alt`/`shift`/`win`，其余用
+`VK_` 常量，字母统一大写，重复写法只留一个），所以 `Backspace`、`SEMICOLON` 这类展示
+标签会各自落成 `VK_BACK`、`VK_OEM_1` 而不是原样写进去。中文、乱码 token、空输入、只写
+排除项、只写修饰键（`key = ctrl` 在游戏里什么都不触发；真要绑 Windows 键本身请写
+`0x5B`/`0x5C`）和 WWMI 不认识的组合会被拒绝并给出中文错误，不会写进 ini。
+
+已有的 mod 里如果写的是 `key = ;` 这种单字符标点，列表里仍能正常显示（见下），但在编辑屏
+原样回车会被拒，需要改写成 `VK_OEM_1`（`/`→`VK_OEM_2`、`=`→`VK_OEM_PLUS`、
+`'`→`VK_OEM_7`）；单字符只收 `A`–`Z` 与 `0`–`9`。同理，已有 ini 里的 `key = VK_LWIN`
+（或 `key = win`）现在也会被拒——纯修饰词在游戏里不触发任何键，要绑 Windows 键本身请改成
+`0x5B`/`0x5C`；而 `VK_LSHIFT`/`VK_LCONTROL`/`VK_LMENU` 这类分侧键码本身就是按键，可以单独写。
+
+ini 里 `key = CTRL 0 ; 说明` 这种行尾注释不会被当成按键：解析时只在 `;`/`#` 前有空白时
+才截掉注释，所以 `key = ;` 仍然是分号键。写回时目标行原有的行尾注释会保留。
 
 ## 更新角色表
 
@@ -148,6 +194,42 @@ wwmm update --no-create         # 只更新角色表，不补角色目录
 
 更新流程：拉取 → 校验 schema/slug/属性/`rover`/`others`（拒绝空表）→ 备份旧文件为
 `roster.json.bak` → 原子写入 → 补全缺失角色目录。校验或下载失败时保留旧角色表。
+
+## 检查更新与自更新
+
+启动时会在后台静默对比
+[GitHub releases](https://github.com/TheBestJie/WW-Mod-Manager/releases) 的最新 tag
+与本地版本号：
+
+- 有新版本：主页弹一条通知「发现新版本 vX.Y.Z（当前 v…）· Ctrl+U 立即更新」；
+- 已是最新、没有 release、断网、JSON 解析失败：**只写日志（`log.debug`），不弹任何错误、
+  不阻塞界面**，读取的接口是 `/releases/latest`，`v` 前缀会去掉后按 `X.Y.Z` 数值比较。
+
+随时按 `Ctrl+U` 手动检查，弹屏会给出结果：
+
+- 已是最新：显示当前版本号，无需操作；
+- 有新版本：给出版本对比，点「更新」执行 `git pull --ff-only`；检测到 `uv` 时再执行
+  `uv tool install --editable --force <仓库路径>`，完成后需重启 `wwmm` 生效；
+- 检查或更新失败：弹屏显示中文错误，并指明失败在哪一步（检查 / `git pull` / uv 重装）；
+  自更新只对 git clone + `install.sh` 的 editable 安装生效，找不到仓库根目录时给出手动更新
+  地址，不会执行任何 git 命令。
+
+### 关于 `Ctrl+U`
+
+`Ctrl+U` 是应用级全局绑定，并且 `priority=True`：**它在任何输入框里也优先开弹屏**，
+所以设置页、搜索框、快捷键编辑屏的输入框里按下它都不会再删掉光标到行首的内容。
+这是刻意的取舍——手动检查更新的入口必须随处可用，而输入框里的删除操作都有等价按键：
+
+| 想做的事 | 用这个 |
+|---|---|
+| 删到上一个词首（连按可清空整行） | `Ctrl+W` |
+| 删到行尾 | `Ctrl+K` |
+| 一次删到行首 | `Shift+Home` 选中到行首后 `Backspace`，或 `Super+Backspace`（≈ macOS `Cmd+Delete`） |
+| 逐字向右删 | `Delete` 或 `Ctrl+D` |
+| 移到行首 / 行尾 | `Ctrl+A` / `Ctrl+E` |
+
+`Super+Backspace` 在 Textual 里仍然绑定着 `delete_left_all`，能否触发取决于终端是否把该
+组合上报给应用。
 
 ## 数据与日志路径
 
@@ -178,6 +260,30 @@ wwmm update --no-create         # 只更新角色表，不补角色目录
 - 分支保护需要允许 GitHub Actions push。
 - 仓库连续 60 天无活动时定时任务会被 GitHub 停用；游戏版本更新通常会保持活跃，
   真停了在 Actions 页面手动运行一次即可。
+
+## 发布
+
+版本号写在两处，必须同步（`tests/test_release_workflow.py::test_version_is_synced_across_sources`
+会拦住只改一处的情况）：
+
+- `pyproject.toml` 的 `project.version`：`perform_self_update` 用它判断更新后的版本；
+- `src/wwmm/__init__.py` 的 `__version__`：`wwmm --version` 和更新检查展示的版本。
+
+升级版本：改这两处 → 提交 → 打 tag 并推送（`tests/test_cli.py` 里还有一处 `--version`
+断言和 `uv.lock` 的包版本会跟着变，跑一次 `uv sync` 加 `pytest` 就知道有没有漏）：
+
+```bash
+git tag v1.3.0
+git push origin main --tags
+```
+
+`.github/workflows/release.yml` 会在 `v*` tag 推送时用 `gh release create` 建同名 release
+（`--generate-notes` 自动生成 release notes）。启动检查读的就是这个 release，**没有
+release 时自更新功能等于不存在**，所以发版必须打 tag。
+
+workflow 在发布前会核对 `v$GITHUB_REF_NAME` 与 `pyproject.toml` 的 `project.version`：
+不一致就直接失败。这一步防的是「tag 打了 v1.4.0 但版本号还停在 1.3.0」——那样更新完成后
+界面会同时显示「已更新到 v1.3.0」和「最新 v1.4.0」，用户会陷入反复点更新的循环。
 
 ## 开发
 
