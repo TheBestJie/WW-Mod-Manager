@@ -234,6 +234,47 @@ def test_perform_self_update_reports_install_failure(tmp_path, monkeypatch):
     assert "更新失败" not in message
 
 
+def test_perform_self_update_reports_pull_timeout(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    _write_pyproject(root, version="1.4.0")
+    _uv_present(monkeypatch)
+
+    def runner(command, **kwargs):
+        raise subprocess.TimeoutExpired(command, 60)
+
+    with pytest.raises(SelfUpdateError) as excinfo:
+        perform_self_update(root, runner=runner)
+
+    message = str(excinfo.value)
+    assert "更新超时" in message
+    assert "改用 git pull" in message
+    assert "代码已更新" not in message
+
+
+def test_perform_self_update_reports_install_timeout(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    _write_pyproject(root, version="1.4.0")
+    _uv_present(monkeypatch)
+    calls = []
+
+    def runner(command, **kwargs):
+        calls.append(command)
+        if len(calls) == 1:
+            return _FakeCompleted()
+        raise subprocess.TimeoutExpired(command, 60)
+
+    with pytest.raises(SelfUpdateError) as excinfo:
+        perform_self_update(root, runner=runner)
+
+    message = str(excinfo.value)
+    assert len(calls) == 2
+    assert calls[0][:3] == ["git", "-C", str(root)]
+    assert "代码已更新" in message
+    assert "重装超时" in message
+    assert f"uv tool install -e {root}" in message
+    assert "改用 git pull" not in message
+
+
 def test_perform_self_update_without_uv(tmp_path, monkeypatch):
     root = tmp_path / "repo"
     _write_pyproject(root, version="1.4.0")

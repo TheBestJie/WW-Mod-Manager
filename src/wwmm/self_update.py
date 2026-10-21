@@ -140,7 +140,9 @@ def _summarize(stdout: str | None, stderr: str | None) -> str:
     return detail
 
 
-def _run_command(runner, command: list[str]) -> subprocess.CompletedProcess:
+def _run_command(
+    runner, command: list[str], *, timeout_message: str
+) -> subprocess.CompletedProcess:
     try:
         return runner(
             command,
@@ -151,22 +153,28 @@ def _run_command(runner, command: list[str]) -> subprocess.CompletedProcess:
             check=False,
         )
     except subprocess.TimeoutExpired as exc:
-        raise SelfUpdateError(
-            f"更新超时（{COMMAND_TIMEOUT} 秒），请检查网络或改用 git pull"
-        ) from exc
+        raise SelfUpdateError(timeout_message) from exc
 
 
 def perform_self_update(repo_root: Path, runner=subprocess.run) -> SelfUpdateResult:
     repo_root = Path(repo_root)
     pull_command = ["git", "-C", str(repo_root), "pull", "--ff-only"]
-    pulled = _run_command(runner, pull_command)
+    pulled = _run_command(
+        runner,
+        pull_command,
+        timeout_message=f"更新超时（{COMMAND_TIMEOUT} 秒），请检查网络或改用 git pull",
+    )
     if pulled.returncode != 0:
         raise SelfUpdateError(f"git pull 失败：{_summarize(pulled.stdout, pulled.stderr)}")
 
     reinstalled = False
     if shutil.which("uv"):
         install_command = ["uv", "tool", "install", "--editable", "--force", str(repo_root)]
-        installed = _run_command(runner, install_command)
+        installed = _run_command(
+            runner,
+            install_command,
+            timeout_message=(f"代码已更新，但重装超时，请手动运行 uv tool install -e {repo_root}"),
+        )
         if installed.returncode == 0:
             reinstalled = True
         else:

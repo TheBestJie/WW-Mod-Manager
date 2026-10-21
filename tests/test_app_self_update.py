@@ -11,9 +11,10 @@ from pathlib import Path
 
 import pytest
 from textual.containers import Vertical
-from textual.widgets import Button, Static
+from textual.widgets import Button, Input, Static
 
 from wwmm.errors import SelfUpdateError
+from wwmm.screens.search import SearchScreen
 from wwmm.screens.self_update import SelfUpdateScreen
 from wwmm.self_update import (
     ReleaseInfo,
@@ -80,6 +81,30 @@ async def test_ctrl_u_opens_screen(app):
             len([screen for screen in app.screen_stack if isinstance(screen, SelfUpdateScreen)])
             == 1
         )
+
+
+def test_conftest_default_updater_refuses_to_run(app, tmp_path):
+    """A forgotten monkeypatch must fail loud instead of pulling the real checkout."""
+    with pytest.raises(AssertionError, match="monkeypatch self_updater"):
+        app.self_updater(tmp_path / "missing")
+
+
+async def test_ctrl_u_wins_over_focused_input(app):
+    """Input binds ctrl+u to delete_left_all, so the app binding needs priority."""
+    async with app.run_test(size=(100, 30)) as pilot:
+        await pilot.press("/")
+        assert isinstance(app.screen, SearchScreen)
+        await pilot.press("d")
+        await pilot.pause()
+        search_input = app.screen.query_one("#search-input", Input)
+        assert search_input.value == "d"
+
+        await pilot.press("ctrl+u")
+        await pilot.pause()
+
+        assert isinstance(app.screen, SelfUpdateScreen)
+        assert isinstance(app.screen.query_one("#self-update-box"), Vertical)
+        assert search_input.value == "d"
 
 
 async def test_check_newer_shows_confirm(app, monkeypatch):

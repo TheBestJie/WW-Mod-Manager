@@ -56,7 +56,7 @@ class SelfUpdateScreen(ModalScreen[None]):
         """Hop back to the UI thread, tolerating an app that already quit."""
         try:
             self.app.call_from_thread(callback, *args)
-        except RuntimeError:
+        except Exception:  # noqa: BLE001 - a UI callback must never kill the worker
             return
 
     @work(thread=True, exclusive=True)

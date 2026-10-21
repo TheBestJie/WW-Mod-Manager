@@ -32,7 +32,11 @@ class WWMMApp(App):
     CSS_PATH = "app.tcss"
     TITLE = "WWMM"
     SUB_TITLE = "鸣潮 Mod 管理器"
-    BINDINGS: ClassVar[list[Binding]] = [Binding("ctrl+u", "check_app_update", "检查更新")]
+    # priority=True: Input binds ctrl+u to delete_left_all, so a plain app binding
+    # would never fire while a text field has focus.
+    BINDINGS: ClassVar[list[Binding]] = [
+        Binding("ctrl+u", "check_app_update", "检查更新", priority=True)
+    ]
 
     def __init__(
         self,
