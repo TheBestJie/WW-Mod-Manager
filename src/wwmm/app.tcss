@@ -64,3 +64,40 @@ HotkeysScreen {
     height: 1;
     color: $text-muted;
 }
+
+UpdateScreen,
+SelfUpdateScreen,
+HotkeyEditScreen {
+    align: center middle;
+}
+
+/* A bare Vertical inside a ModalScreen defaults to 1fr, which stretched the
+   dialog over the whole terminal and pinned its content to the top-left. */
+#update-box,
+#self-update-box,
+#hotkey-edit-box {
+    max-width: 94%;
+    height: auto;
+    border: round $primary;
+    background: $surface;
+    padding: 1 2;
+}
+
+#update-box {
+    width: 56;
+}
+
+#self-update-box {
+    width: 74;
+}
+
+#hotkey-edit-box {
+    width: 76;
+}
+
+/* The button row defaults to 1fr height, which would stretch the auto-height
+   dialog back to the full terminal height. */
+#update-box > Horizontal,
+#self-update-box > Horizontal {
+    height: auto;
+}
