@@ -222,6 +222,9 @@ _PUNCTUATION_HINT = (
     "符号请写 VK 名称（如 ; → VK_OEM_1、/ → VK_OEM_2、= → VK_OEM_PLUS）"
 )
 _XBOX_HINT = "不支持的按键：{}；可用写法：{}（可带手柄编号 1–4，如 XB2_LEFT_SHOULDER）"
+_MODIFIER_ONLY_HINT = (
+    "至少需要一个按键，不能只写修饰键；若确实要绑定 Windows 键本身，请写 0x5B / 0x5C"
+)
 _XBOX_BUTTON_LIST = "、".join(f"XB_{name}" for name in sorted(_XBOX_BUTTONS))
 
 
@@ -292,19 +295,31 @@ def validate_key_expr(text: str) -> str:
     tokens = _TOKEN_SPLIT_RE.split(text.strip())
     if any(token == "" for token in tokens):
         raise HotkeyEditError("按键组合不能为空")
-    normalized = [_normalize_token(token) for token in tokens]
+    # Repeated spellings of one key (``f7 VK_F7``, ``no_ctrl no_control``) collapse
+    # onto their canonical identity, keeping the first spelling seen.
+    unique: list[str] = []
+    seen: set[tuple[bool, frozenset[str]]] = set()
+    for token in (_normalize_token(token) for token in tokens):
+        identity = (token.startswith("no_"), _identities(token))
+        if identity in seen:
+            continue
+        seen.add(identity)
+        unique.append(token)
+    real_tokens = [token for token in unique if not token.startswith("no_")]
     # A ``no_*`` token only excludes a key; if every real key is excluded (or
     # none is left) the expression parses to an empty binding and the ini would
     # end up with a line that the hotkey list silently drops.
     excluded = frozenset().union(
-        *(_identities(token) for token in normalized if token.startswith("no_"))
+        *(_identities(token) for token in unique if token.startswith("no_"))
     )
-    real = frozenset().union(
-        *(_identities(token) for token in normalized if not token.startswith("no_"))
-    )
+    real = frozenset().union(*(_identities(token) for token in real_tokens))
     if not real - excluded:
         raise HotkeyEditError("至少需要一个按键，不能只写排除项")
-    return " ".join(normalized)
+    # A bare modifier never fires in 3Dmigoto either: ``key = ctrl`` reports
+    # success in the UI and does nothing in game.
+    if all(token in _MODIFIER_KEYS for token in real_tokens):
+        raise HotkeyEditError(_MODIFIER_ONLY_HINT)
+    return " ".join(unique)
 
 
 def apply_hotkey(

@@ -36,8 +36,6 @@ def test_validate_accepts_supported_syntax():
         ("ctrl plus", "ctrl VK_OEM_PLUS"),
         ("ctrl equals", "ctrl VK_OEM_PLUS"),
         ("printscreen", "VK_SNAPSHOT"),
-        ("win", "win"),
-        ("VK_RWIN", "win"),
         ("vk_f7", "VK_F7"),
         ("f7", "VK_F7"),
         ("backspace", "VK_BACK"),
@@ -46,7 +44,9 @@ def test_validate_accepts_supported_syntax():
         ("xb2_left_shoulder", "XB2_LEFT_SHOULDER"),
         ("XB_A", "XB_A"),
         ("Ctrl+Shift+Q", "ctrl shift Q"),
+        # 未经游戏侧验证：若不成立需改断言（分侧修饰键是否可单独成键）。
         ("VK_LSHIFT", "VK_LSHIFT"),
+        # 未经游戏侧验证：若不成立需改断言（3Dmigoto 是否接受大写 0X 前缀）。
         ("0X7B", "0X7B"),
         ("f7 no_backspace", "VK_F7 no_vk_back"),
         ("f7 no_control", "VK_F7 no_ctrl"),
@@ -97,6 +97,85 @@ def test_validate_rejects_expressions_without_real_keys():
     assert validate_key_expr("ctrl alt VK_F7") == "ctrl alt VK_F7"
     assert validate_key_expr("0x70") == "0x70"
     assert validate_key_expr("XB_X") == "XB_X"
+
+
+@pytest.mark.parametrize(
+    "bad",
+    ["ctrl", "alt", "shift", "win", "VK_LWIN", "VK_RWIN", "shift alt", "ctrl win", "Ctrl+Alt"],
+)
+def test_validate_rejects_modifier_only_expressions(bad):
+    """``key = ctrl`` never fires in game, so it must not report success."""
+    with pytest.raises(HotkeyEditError, match="修饰键") as excinfo:
+        validate_key_expr(bad)
+    assert "0x5B" in str(excinfo.value)
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("ctrl alt shift win K", "ctrl alt shift win K"),
+        ("no_alt F1", "no_alt VK_F1"),
+        ("f7 no_ctrl", "VK_F7 no_ctrl"),
+        ("ctrl no_modifiers VK_OEM_2", "ctrl no_modifiers VK_OEM_2"),
+        ("no_modifiers XB_A", "no_modifiers XB_A"),
+        ("ctrl 0x70", "ctrl 0x70"),
+    ],
+)
+def test_validate_accepts_modifiers_with_a_real_key(raw, expected):
+    assert validate_key_expr(raw) == expected
+
+
+def test_validate_accepts_hex_for_the_windows_keys(tmp_path):
+    """The modifier-only error points at 0x5B/0x5C, so those must really work."""
+    assert validate_key_expr("0x5B") == "0x5B"
+    assert validate_key_expr("0x5C") == "0x5C"
+    mod = tmp_path / "Mod"
+    _write(mod / "mod.ini", "[KeyHair]\nkey = CTRL 0\ntype = cycle")
+    apply_hotkey(mod, "mod.ini", "KeyHair", "key", 0, validate_key_expr("0x5B"))
+    assert (mod / "mod.ini").read_text(encoding="utf-8").splitlines()[1] == "key = 0x5B"
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("f7 f7", "VK_F7"),
+        ("f7 VK_F7", "VK_F7"),
+        ("F7 vk_f7 VK_F7", "VK_F7"),
+        ("ctrl ctrl K", "ctrl K"),
+        ("ctrl K k", "ctrl K"),
+        ("XB_A XB_A", "XB_A"),
+        ("0x70 0X70", "0x70"),
+        ("f7 no_ctrl no_control", "VK_F7 no_ctrl"),
+        ("f7 no_alt no_menu", "VK_F7 no_alt"),
+    ],
+)
+def test_validate_dedupes_repeated_tokens(raw, expected):
+    assert validate_key_expr(raw) == expected
+
+
+def test_every_alias_normalises_to_a_canonical_name():
+    """Behavioural anti-regression for the display-label bug.
+
+    Re-coupling validation to a label table would let e.g. ``BACKSPACE`` through
+    verbatim; this iterates every alias and demands a real canonical name.
+    """
+    import wwmm.hotkey_edit as module
+
+    allowed = module._VK_NAMES | {"ctrl", "alt", "shift", "win"}
+    for alias in module._VK_ALIASES:
+        # Paired with a real key so modifier aliases (CTRL/ALT/WIN) are not
+        # rejected as modifier-only expressions.
+        tokens = validate_key_expr(f"{alias} K").split(" ")
+        assert tokens[1] == "K"
+        real = tokens[0]
+        assert real != alias
+        assert real in allowed or real.removeprefix("VK_") in allowed
+        excluded = validate_key_expr(f"f7 no_{alias}").split(" ")[1]
+        assert excluded != f"no_{alias}"
+        word = excluded.removeprefix("no_")
+        assert word in {"ctrl", "alt", "shift", "win"} or (
+            word.removeprefix("vk_").upper() in module._VK_NAMES
+        )
 
 
 def test_validate_rejects_unsupported():
