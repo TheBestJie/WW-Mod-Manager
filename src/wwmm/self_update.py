@@ -20,6 +20,8 @@ RELEASES_API_URL = "https://api.github.com/repos/TheBestJie/WW-Mod-Manager/relea
 RELEASES_PAGE_URL = "https://github.com/TheBestJie/WW-Mod-Manager/releases/latest"
 PROJECT_NAME = "ww-mod-manager"
 USER_AGENT = f"wwmm/{__version__}"
+COMMAND_TIMEOUT = 60
+MAX_ERROR_DETAIL = 200
 
 
 @dataclass(frozen=True)
@@ -130,24 +132,47 @@ def _read_version(repo_root: Path) -> str:
     return version
 
 
+def _summarize(stdout: str | None, stderr: str | None) -> str:
+    parts = [part.strip() for part in (stdout, stderr) if part and part.strip()]
+    detail = "\n".join(parts) or "未知错误"
+    if len(detail) > MAX_ERROR_DETAIL:
+        return f"{detail[:MAX_ERROR_DETAIL]}…"
+    return detail
+
+
+def _run_command(runner, command: list[str]) -> subprocess.CompletedProcess:
+    try:
+        return runner(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=COMMAND_TIMEOUT,
+            stdin=subprocess.DEVNULL,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise SelfUpdateError(
+            f"更新超时（{COMMAND_TIMEOUT} 秒），请检查网络或改用 git pull"
+        ) from exc
+
+
 def perform_self_update(repo_root: Path, runner=subprocess.run) -> SelfUpdateResult:
     repo_root = Path(repo_root)
     pull_command = ["git", "-C", str(repo_root), "pull", "--ff-only"]
-    pulled = runner(pull_command, capture_output=True, text=True, check=False)
+    pulled = _run_command(runner, pull_command)
     if pulled.returncode != 0:
-        detail = f"{pulled.stdout or ''}{pulled.stderr or ''}".strip()
-        raise SelfUpdateError(f"git pull 失败：{detail or '未知错误'}")
+        raise SelfUpdateError(f"git pull 失败：{_summarize(pulled.stdout, pulled.stderr)}")
 
     reinstalled = False
     if shutil.which("uv"):
         install_command = ["uv", "tool", "install", "--editable", "--force", str(repo_root)]
-        installed = runner(install_command, capture_output=True, text=True, check=False)
+        installed = _run_command(runner, install_command)
         if installed.returncode == 0:
             reinstalled = True
         else:
             log.warning(
                 "uv tool install 失败，保留现有安装：%s",
-                (installed.stderr or installed.stdout or "").strip(),
+                _summarize(installed.stdout, installed.stderr),
             )
     else:
         log.info("未找到 uv，跳过重新安装，使用已安装的入口")

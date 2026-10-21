@@ -7,6 +7,7 @@ nothing touches the network or the real repository.
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -233,3 +234,61 @@ def test_perform_refuses_when_dirty_pull_fails(tmp_path, monkeypatch):
         perform_self_update(root, runner=runner)
 
     assert [command for command, _ in calls] == [["git", "-C", str(root), "pull", "--ff-only"]]
+
+
+def test_perform_self_update_bounds_subprocess_calls(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    _write_pyproject(root, version="1.4.0")
+    calls = []
+    _uv_present(monkeypatch)
+
+    perform_self_update(root, runner=_recording_runner(calls))
+
+    assert len(calls) == 2
+    for _, kwargs in calls:
+        assert kwargs["timeout"] == 60
+        assert kwargs["stdin"] is subprocess.DEVNULL
+        assert kwargs["text"] is True
+
+
+def test_perform_self_update_reports_timeout(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    _write_pyproject(root, version="1.4.0")
+    _uv_present(monkeypatch)
+
+    def timeout_runner(command, **kwargs):
+        raise subprocess.TimeoutExpired(command, kwargs.get("timeout", 0))
+
+    with pytest.raises(SelfUpdateError) as excinfo:
+        perform_self_update(root, runner=timeout_runner)
+
+    message = str(excinfo.value)
+    assert "超时" in message
+    assert "60" in message
+    assert "git pull" in message
+
+
+def test_perform_self_update_joins_both_streams(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    _write_pyproject(root, version="1.4.0")
+    _uv_present(monkeypatch)
+    runner = _recording_runner([], returncode=1, stdout="out", stderr="err")
+
+    with pytest.raises(SelfUpdateError) as excinfo:
+        perform_self_update(root, runner=runner)
+
+    assert "out\nerr" in str(excinfo.value)
+
+
+def test_perform_self_update_truncates_long_error(tmp_path, monkeypatch):
+    root = tmp_path / "repo"
+    _write_pyproject(root, version="1.4.0")
+    _uv_present(monkeypatch)
+    runner = _recording_runner([], returncode=1, stdout="x" * 500, stderr="y" * 500)
+
+    with pytest.raises(SelfUpdateError) as excinfo:
+        perform_self_update(root, runner=runner)
+
+    detail = str(excinfo.value).removeprefix("git pull 失败：")
+    assert len(detail) <= 201
+    assert detail.endswith("…")
