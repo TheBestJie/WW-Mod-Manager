@@ -89,6 +89,20 @@ def test_validation_does_not_use_the_display_label_table():
     assert all(len(name) > 1 for name in module._VK_NAMES)
 
 
+def test_friendly_aliases_stay_out_of_the_canonical_name_set():
+    """Merging the alias table into the canonical set would re-open I2.
+
+    The generative alias test only checks the *output* of ``validate_key_expr``.
+    Folding ``_VK_ALIASES`` into ``_VK_NAMES`` keeps that output canonical-looking
+    (``Backspace`` becomes ``VK_BACKSPACE``), so the two sets must stay disjoint.
+    """
+    import wwmm.hotkey_edit as module
+
+    assert set(module._VK_NAMES) & set(module._VK_ALIASES) == set()
+    assert set(module._VK_ALIASES.values()) <= set(module._VK_NAMES)
+    assert "BACKSPACE" not in module._VK_NAMES
+
+
 def test_validate_rejects_expressions_without_real_keys():
     for bad in ("no_ctrl", "no_modifiers", "ctrl no_ctrl", "win no_win", "f7 no_vk_f7"):
         with pytest.raises(HotkeyEditError, match="排除项"):
