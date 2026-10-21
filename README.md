@@ -273,7 +273,7 @@ wwmm update --no-create         # 只更新角色表，不补角色目录
 断言和 `uv.lock` 的包版本会跟着变，跑一次 `uv sync` 加 `pytest` 就知道有没有漏）：
 
 ```bash
-git tag v1.3.0
+git tag v1.3.1
 git push origin main --tags
 ```
 
