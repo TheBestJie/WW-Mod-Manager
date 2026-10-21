@@ -253,7 +253,8 @@ wwmm update --no-create         # 只更新角色表，不补角色目录
 - `pyproject.toml` 的 `project.version`：`perform_self_update` 用它判断更新后的版本；
 - `src/wwmm/__init__.py` 的 `__version__`：`wwmm --version` 和更新检查展示的版本。
 
-升级版本：改这两处 → 提交 → 打 tag 并推送：
+升级版本：改这两处 → 提交 → 打 tag 并推送（`tests/test_cli.py` 里还有一处 `--version`
+断言和 `uv.lock` 的包版本会跟着变，跑一次 `uv sync` 加 `pytest` 就知道有没有漏）：
 
 ```bash
 git tag v1.3.0
@@ -263,6 +264,10 @@ git push origin main --tags
 `.github/workflows/release.yml` 会在 `v*` tag 推送时用 `gh release create` 建同名 release
 （`--generate-notes` 自动生成 release notes）。启动检查读的就是这个 release，**没有
 release 时自更新功能等于不存在**，所以发版必须打 tag。
+
+workflow 在发布前会核对 `v$GITHUB_REF_NAME` 与 `pyproject.toml` 的 `project.version`：
+不一致就直接失败。这一步防的是「tag 打了 v1.4.0 但版本号还停在 1.3.0」——那样更新完成后
+界面会同时显示「已更新到 v1.3.0」和「最新 v1.4.0」，用户会陷入反复点更新的循环。
 
 ## 开发
 
