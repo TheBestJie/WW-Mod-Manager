@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "game_version": "3.7",
+  "game_version": "3.8",
   "source": {
     "repo": "Arikatsu/WutheringWaves_Data",
-    "branch": "3.7",
-    "commit": "9218d612ad815e398e064e577e42aaf878899968",
-    "committed_at": "2026-09-29T20:35:07Z"
+    "branch": "3.8",
+    "commit": "49d65625340a32cec6851a12baedc03b5a630b25",
+    "committed_at": "2026-11-10T05:39:55Z"
   },
   "characters": [
     {
@@ -954,6 +954,25 @@
         "lx"
       ],
       "folder": "lucy",
+      "special": false
+    },
+    {
+      "slug": "lily",
+      "name_zh": "莉莉",
+      "name_en": "Lily",
+      "elements": [
+        "衍射"
+      ],
+      "pinyin": "lili",
+      "initials": "ll",
+      "aliases": [
+        "莉莉",
+        "Lily",
+        "lily",
+        "lili",
+        "ll"
+      ],
+      "folder": "lily",
       "special": false
     },
     {
